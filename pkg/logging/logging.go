@@ -216,7 +216,7 @@ func GetLogger() *zerolog.Logger {
 var ConfigDefault = Config{
 	Next:     nil,
 	Logger:   &logger,
-	Fields:   []string{FieldIP, FieldLatency, FieldStatus, FieldMethod, FieldURL, FieldError, FieldBody},
+	Fields:   []string{FieldIP, FieldLatency, FieldStatus, FieldMethod, FieldURL, FieldError},
 	Messages: []string{"Server error", "Client error", "Success"},
 	Levels:   []zerolog.Level{zerolog.ErrorLevel, zerolog.WarnLevel, zerolog.InfoLevel, zerolog.DebugLevel},
 }

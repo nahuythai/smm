@@ -4,8 +4,11 @@ import (
 	"context"
 	"smm/internal/database"
 	"smm/internal/database/models"
+	"smm/pkg/constants"
+	"smm/pkg/response"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,6 +19,11 @@ type User interface {
 	CreateOne(user models.User) (*models.User, error)
 	GetByFilter(filter bson.M, opts ...QueryOption) ([]models.User, error)
 	GetTotalByFilter(filter bson.M) (total int64, err error)
+	UpdateApiKeyById(id primitive.ObjectID, apiKey string) error
+	UpdateById(id primitive.ObjectID, doc UserUpdateByIdDoc) error
+	GetById(id primitive.ObjectID, opts ...QueryOption) (user *models.User, err error)
+	UpdateBalanceById(id primitive.ObjectID, balance float64) error
+	UpdatePasswordById(id primitive.ObjectID, password string) error
 }
 type userQuery struct {
 	ctx        context.Context
@@ -51,6 +59,7 @@ func (q *userQuery) GetByFilter(filter bson.M, opts ...QueryOption) ([]models.Us
 		Skip:       opt.QuerySkip(),
 		Limit:      opt.QueryLimit(),
 		Projection: opt.QueryOnlyField(),
+		Sort:       opt.QuerySort(),
 	}
 	cursor, err := q.collection.Find(q.ctx, filter, &findOpts)
 	if err != nil {
@@ -71,4 +80,80 @@ func (q *userQuery) GetTotalByFilter(filter bson.M) (total int64, err error) {
 		return 0, err
 	}
 	return total, nil
+}
+
+func (q *userQuery) UpdateApiKeyById(id primitive.ObjectID, apiKey string) error {
+	result, err := q.collection.UpdateByID(q.ctx, id, bson.M{
+		"$set": bson.M{"api_key": apiKey, "updated_at": time.Now()},
+	})
+	if err != nil {
+		logger.Error().Err(err).Str("func", "UpdateApiKeyById").Str("funcInline", "q.collection.UpdateByID").Msg("userQuery")
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return response.NewError(fiber.StatusNotFound, response.ErrorResponse{Code: constants.ErrCodeUserNotFound, Err: constants.ErrMsgResourceNotFound})
+	}
+	return nil
+}
+
+func (q *userQuery) UpdateById(id primitive.ObjectID, doc UserUpdateByIdDoc) error {
+	doc.UpdatedAt = time.Now()
+	result, err := q.collection.UpdateByID(q.ctx, id, bson.M{
+		"$set": doc,
+	})
+	if err != nil {
+		logger.Error().Err(err).Str("func", "UpdateById").Str("funcInline", "q.collection.UpdateByID").Msg("userQuery")
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return response.NewError(fiber.StatusNotFound, response.ErrorResponse{Code: constants.ErrCodeUserNotFound, Err: constants.ErrMsgResourceNotFound})
+	}
+	return nil
+}
+
+func (q *userQuery) GetById(id primitive.ObjectID, opts ...QueryOption) (*models.User, error) {
+	var user models.User
+	var opt QueryOption
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	findOpt := options.FindOneOptions{
+		Projection: opt.QueryOnlyField(),
+	}
+	if err := q.collection.FindOne(q.ctx, bson.M{"_id": id}, &findOpt).Decode(&user); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, response.NewError(fiber.StatusNotFound, response.ErrorResponse{Code: constants.ErrCodeUserNotFound, Err: constants.ErrMsgResourceNotFound})
+		}
+		logger.Error().Err(err).Str("func", "GetById").Str("funcInline", "q.collection.FindOne").Msg("userQuery")
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (q *userQuery) UpdateBalanceById(id primitive.ObjectID, balance float64) error {
+	result, err := q.collection.UpdateByID(q.ctx, id, bson.M{
+		"$set": bson.M{"balance": balance, "updated_at": time.Now()},
+	})
+	if err != nil {
+		logger.Error().Err(err).Str("func", "UpdateBalanceById").Str("funcInline", "q.collection.UpdateByID").Msg("userQuery")
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return response.NewError(fiber.StatusNotFound, response.ErrorResponse{Code: constants.ErrCodeUserNotFound, Err: constants.ErrMsgResourceNotFound})
+	}
+	return nil
+}
+
+func (q *userQuery) UpdatePasswordById(id primitive.ObjectID, password string) error {
+	result, err := q.collection.UpdateByID(q.ctx, id, bson.M{
+		"$set": bson.M{"password": password, "updated_at": time.Now()},
+	})
+	if err != nil {
+		logger.Error().Err(err).Str("func", "UpdatePasswordById").Str("funcInline", "q.collection.UpdateByID").Msg("userQuery")
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return response.NewError(fiber.StatusNotFound, response.ErrorResponse{Code: constants.ErrCodeUserNotFound, Err: constants.ErrMsgResourceNotFound})
+	}
+	return nil
 }

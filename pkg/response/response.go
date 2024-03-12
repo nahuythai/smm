@@ -10,7 +10,7 @@ import (
 
 type Response struct {
 	StatusCode int
-	Data       map[string]interface{}
+	Data       interface{}
 }
 
 type ErrorResponse struct {

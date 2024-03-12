@@ -26,4 +26,6 @@ func (r *category) V1() {
 	router := r.router.Group("/categories")
 	router.Post("/", r.ctrl.Create)
 	router.Post("/list", r.ctrl.List)
+	router.Put("/", r.ctrl.Update)
+	router.Get("/:id", r.ctrl.Get)
 }

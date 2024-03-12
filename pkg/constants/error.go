@@ -2,6 +2,7 @@ package constants
 
 const (
 	ErrMsgResourceNotFound = "resource not found"
+	ErrMsgFieldWrongType   = "field wrong type"
 )
 
 const (
@@ -13,4 +14,8 @@ const (
 
 const (
 	ErrCodeCategoryNotFound = "1000"
+)
+
+const (
+	ErrCodeUserNotFound = "2000"
 )

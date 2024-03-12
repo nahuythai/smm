@@ -9,12 +9,14 @@ import (
 	"smm/pkg/response"
 
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Controller interface {
 	Create(ctx *fiber.Ctx) error
 	List(ctx *fiber.Ctx) error
+	Update(ctx *fiber.Ctx) error
+	Get(ctx *fiber.Ctx) error
 }
 type controller struct{}
 
@@ -25,7 +27,7 @@ func New() Controller {
 func (ctrl *controller) Create(ctx *fiber.Ctx) error {
 	var requestBody serializers.CategoryCreateBodyValidate
 	if err := ctx.BodyParser(&requestBody); err != nil {
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: "Field wrong type", Code: constants.ErrCodeAppBadRequest})
+		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	if err := requestBody.Validate(); err != nil {
 		return err
@@ -46,7 +48,7 @@ func (ctrl *controller) Create(ctx *fiber.Ctx) error {
 func (ctrl *controller) List(ctx *fiber.Ctx) error {
 	var requestBody serializers.CategoryListBodyValidate
 	if err := ctx.BodyParser(&requestBody); err != nil {
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: "Field wrong type", Code: constants.ErrCodeAppBadRequest})
+		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	if err := requestBody.Validate(); err != nil {
 		return err
@@ -94,20 +96,43 @@ func (ctrl *controller) List(ctx *fiber.Ctx) error {
 func (ctrl *controller) Update(ctx *fiber.Ctx) error {
 	var requestBody serializers.CategoryUpdateBodyValidate
 	if err := ctx.BodyParser(&requestBody); err != nil {
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: "Field wrong type", Code: constants.ErrCodeAppBadRequest})
+		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	if err := requestBody.Validate(); err != nil {
 		return err
 	}
 	categoryQuery := queries.NewCategory(ctx.Context())
-	if err := categoryQuery.UpdateById(requestBody.Id,
-		bson.M{
-			"title":       requestBody.Title,
-			"description": requestBody.Description,
-			"image":       requestBody.Image,
-			"status":      requestBody.Status,
-		}); err != nil {
+	if err := categoryQuery.UpdateById(requestBody.Id, queries.CategoryUpdateByIdDoc{
+		Title:       requestBody.Title,
+		Image:       requestBody.Image,
+		Description: requestBody.Description,
+		Status:      requestBody.Status,
+	}); err != nil {
 		return err
 	}
 	return response.New(ctx, response.Response{StatusCode: fiber.StatusOK})
+}
+
+func (ctrl *controller) Get(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
+	categoryId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+	}
+	categoryQuery := queries.NewCategory(ctx.Context())
+	queryOption := queries.NewOption()
+	queryOption.SetOnlyField("title", "description", "created_at", "updated_at", "_id", "status", "image")
+	category, err := categoryQuery.GetById(categoryId, queryOption)
+	if err != nil {
+		return err
+	}
+	return response.New(ctx, response.Response{StatusCode: fiber.StatusOK, Data: serializers.CategoryGetResponse{
+		CreatedAt:   category.CreatedAt,
+		UpdatedAt:   category.UpdatedAt,
+		Title:       category.Title,
+		Description: category.Description,
+		Id:          category.Id,
+		Status:      category.Status,
+		Image:       category.Image,
+	}})
 }

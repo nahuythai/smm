@@ -99,3 +99,13 @@ func (v *CategoryUpdateBodyValidate) Validate() error {
 	}
 	return nil
 }
+
+type CategoryGetResponse struct {
+	UpdatedAt   time.Time          `json:"updated_at"`
+	CreatedAt   time.Time          `json:"created_at"`
+	Title       string             `json:"title"`
+	Image       string             `json:"image"`
+	Status      int                `json:"status"`
+	Description string             `json:"description"`
+	Id          primitive.ObjectID `json:"id"`
+}

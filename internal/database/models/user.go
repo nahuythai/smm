@@ -23,7 +23,7 @@ type User struct {
 	Address           string             `bson:"address"`
 	Password          string             `bson:"password"`
 	Avatar            string             `bson:"avatar"`
-	ApiToken          string             `bson:"api_token"`
+	ApiKey            string             `bson:"api_key"`
 	Id                primitive.ObjectID `bson:"_id,omitempty"`
 }
 

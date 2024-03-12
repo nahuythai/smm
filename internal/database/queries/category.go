@@ -19,7 +19,8 @@ type Category interface {
 	CreateOne(category models.Category) (*models.Category, error)
 	GetByFilter(filter bson.M, opts ...QueryOption) ([]models.Category, error)
 	GetTotalByFilter(filter bson.M) (total int64, err error)
-	UpdateById(id primitive.ObjectID, doc bson.M) error
+	UpdateById(id primitive.ObjectID, doc CategoryUpdateByIdDoc) error
+	GetById(id primitive.ObjectID, opts ...QueryOption) (category *models.Category, err error)
 }
 type categoryQuery struct {
 	ctx        context.Context
@@ -78,8 +79,8 @@ func (q *categoryQuery) GetTotalByFilter(filter bson.M) (total int64, err error)
 	return total, nil
 }
 
-func (q *categoryQuery) UpdateById(id primitive.ObjectID, doc bson.M) error {
-	doc["updated_at"] = time.Now()
+func (q *categoryQuery) UpdateById(id primitive.ObjectID, doc CategoryUpdateByIdDoc) error {
+	doc.UpdatedAt = time.Now()
 	result, err := q.collection.UpdateByID(q.ctx, id, bson.M{
 		"$set": doc,
 	})
@@ -91,4 +92,23 @@ func (q *categoryQuery) UpdateById(id primitive.ObjectID, doc bson.M) error {
 		return response.NewError(fiber.StatusNotFound, response.ErrorResponse{Code: constants.ErrCodeCategoryNotFound, Err: constants.ErrMsgResourceNotFound})
 	}
 	return nil
+}
+
+func (q *categoryQuery) GetById(id primitive.ObjectID, opts ...QueryOption) (*models.Category, error) {
+	var category models.Category
+	var opt QueryOption
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	findOpt := options.FindOneOptions{
+		Projection: opt.QueryOnlyField(),
+	}
+	if err := q.collection.FindOne(q.ctx, bson.M{"_id": id}, &findOpt).Decode(&category); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, response.NewError(fiber.StatusNotFound, response.ErrorResponse{Code: constants.ErrCodeUserNotFound, Err: constants.ErrMsgResourceNotFound})
+		}
+		logger.Error().Err(err).Str("func", "GetById").Str("funcInline", "q.collection.FindOne").Msg("categoryQuery")
+		return nil, err
+	}
+	return &category, nil
 }

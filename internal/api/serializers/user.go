@@ -82,8 +82,6 @@ type UserListResponse struct {
 	UpdatedAt         time.Time          `json:"updated_at"`
 	CreatedAt         time.Time          `json:"created_at"`
 	LastActive        *time.Time         `json:"last_active"`
-	FirstName         string             `json:"first_name"`
-	LastName          string             `json:"last_name"`
 	Username          string             `json:"username"`
 	PhoneNumber       string             `json:"phone_number"`
 	Language          int                `json:"language"`
@@ -94,6 +92,81 @@ type UserListResponse struct {
 	TwoFAEnable       bool               `json:"2fa_enable"`
 	Address           string             `json:"address"`
 	Avatar            string             `json:"avatar"`
-	ApiToken          string             `json:"api_token"`
+	ApiKey            string             `json:"api_key"`
 	Id                primitive.ObjectID `json:"id"`
+}
+
+type UserGenerateAPIKey struct {
+	Id primitive.ObjectID `json:"id"`
+}
+
+func (v *UserGenerateAPIKey) Validate() error {
+	if err := validator.Validate(v); err != nil {
+		return err
+	}
+	return nil
+}
+
+type UserUpdateBodyValidate struct {
+	Id                primitive.ObjectID `json:"id" validate:"required"`
+	FirstName         *string            `json:"first_name" validate:"omitempty"`
+	LastName          *string            `json:"last_name" validate:"omitempty"`
+	Username          string             `json:"username" validate:"required,lowercase,alphanum,min=3,max=20"`
+	PhoneNumber       *string            `json:"phone_number" validate:"omitempty"`
+	Language          *int               `json:"language" validate:"omitempty"`
+	Status            *int               `json:"status" validate:"omitempty,oneof=0 1"`
+	Email             string             `json:"email" validate:"required,lowercase,email"`
+	EmailVerification *bool              `json:"email_verification" validate:"omitempty"`
+	TwoFAEnable       *bool              `json:"2fa_enable" validate:"omitempty"`
+	Address           *string            `json:"address" validate:"omitempty"`
+	Avatar            *string            `json:"avatar" validate:"omitempty"`
+}
+
+func (v *UserUpdateBodyValidate) Validate() error {
+	if err := validator.Validate(v); err != nil {
+		return err
+	}
+	return nil
+}
+
+type UserGetResponse struct {
+	UpdatedAt         time.Time          `json:"updated_at"`
+	CreatedAt         time.Time          `json:"created_at"`
+	LastActive        *time.Time         `json:"last_active"`
+	Username          string             `json:"username"`
+	PhoneNumber       string             `json:"phone_number"`
+	Language          int                `json:"language"`
+	Status            int                `json:"status"`
+	Balance           float64            `json:"balance"`
+	Email             string             `json:"email"`
+	EmailVerification bool               `json:"email_verification"`
+	TwoFAEnable       bool               `json:"2fa_enable"`
+	Address           string             `json:"address"`
+	Avatar            string             `json:"avatar"`
+	ApiKey            string             `json:"api_key"`
+	Id                primitive.ObjectID `json:"id"`
+}
+
+type UserUpdateBalanceBodyValidate struct {
+	Id      primitive.ObjectID `json:"id" validate:"required"`
+	Balance float64            `json:"balance" validate:"required,min=0"`
+}
+
+func (v *UserUpdateBalanceBodyValidate) Validate() error {
+	if err := validator.Validate(v); err != nil {
+		return err
+	}
+	return nil
+}
+
+type UserUpdatePasswordBodyValidate struct {
+	Id       primitive.ObjectID `json:"id" validate:"required"`
+	Password string             `json:"password" validate:"required,min=3,max=20"`
+}
+
+func (v *UserUpdatePasswordBodyValidate) Validate() error {
+	if err := validator.Validate(v); err != nil {
+		return err
+	}
+	return nil
 }
