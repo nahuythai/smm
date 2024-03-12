@@ -1,0 +1,10 @@
+linters:
+  enable:
+    - gocritic
+    - gocyclo
+    - gofmt
+    - gomnd
+    - gosec
+    - govet
+    - staticcheck
+  fast: true
