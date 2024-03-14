@@ -1,11 +1,12 @@
 package main
 
 import (
-	"log"
 	"smm/internal/api/routers"
 	"smm/internal/database"
 	"smm/pkg/configure"
+	"smm/pkg/jwt"
 	"smm/pkg/logging"
+	"smm/pkg/otp"
 	"smm/pkg/response"
 	"smm/pkg/validator"
 
@@ -15,11 +16,16 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
-var cfg = configure.GetConfig()
+var (
+	cfg    = configure.GetConfig()
+	logger = logging.GetLogger()
+)
 
 func main() {
 	database.InitDatabase()
 	validator.InitValidator()
+	jwt.New(cfg.SecretKey).InitGlobal()
+	otp.New().InitGlobal()
 	app := fiber.New(fiber.Config{
 		JSONEncoder:  sonic.Marshal,
 		JSONDecoder:  sonic.Unmarshal,
@@ -28,7 +34,9 @@ func main() {
 
 	addMiddlewares(app)
 	addRoute(app)
-	log.Fatal(app.Listen(cfg.ServerAddr()))
+	if err := app.Listen(cfg.ServerAddr()); err != nil {
+		logger.Fatal().Err(err)
+	}
 }
 
 func addMiddlewares(app *fiber.App) {

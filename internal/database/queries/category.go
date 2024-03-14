@@ -40,7 +40,7 @@ func (q *categoryQuery) CreateOne(category models.Category) (*models.Category, e
 	category.CreatedAt = now
 	result, err := q.collection.InsertOne(q.ctx, category)
 	if err != nil {
-		logger.Error().Err(err).Str("func", "CreateOne").Str("funcInline", "q.collection.InsertOne").Msg("categoryQuery")
+		logger.Error().Err(err).Caller().Str("func", "CreateOne").Str("funcInline", "q.collection.InsertOne").Msg("categoryQuery")
 		return nil, err
 	}
 	category.Id = result.InsertedID.(primitive.ObjectID)
@@ -60,12 +60,12 @@ func (q *categoryQuery) GetByFilter(filter bson.M, opts ...QueryOption) ([]model
 	}
 	cursor, err := q.collection.Find(q.ctx, filter, &findOpts)
 	if err != nil {
-		logger.Error().Err(err).Str("func", "GetByFilter").Str("funcInline", "q.collection.Find").Msg("categoryQuery")
+		logger.Error().Err(err).Caller().Str("func", "GetByFilter").Str("funcInline", "q.collection.Find").Msg("categoryQuery")
 		return nil, err
 	}
 	var categories []models.Category
 	if err = cursor.All(q.ctx, &categories); err != nil {
-		logger.Error().Err(err).Str("func", "GetByFilter").Str("funcInline", "cursor.All").Msg("categoryQuery")
+		logger.Error().Err(err).Caller().Str("func", "GetByFilter").Str("funcInline", "cursor.All").Msg("categoryQuery")
 		return nil, err
 	}
 	return categories, nil
@@ -73,7 +73,7 @@ func (q *categoryQuery) GetByFilter(filter bson.M, opts ...QueryOption) ([]model
 
 func (q *categoryQuery) GetTotalByFilter(filter bson.M) (total int64, err error) {
 	if total, err = q.collection.CountDocuments(q.ctx, filter); err != nil {
-		logger.Error().Err(err).Str("func", "GetTotalByFilter").Str("funcInline", "q.collection.CountDocuments").Msg("categoryQuery")
+		logger.Error().Err(err).Caller().Str("func", "GetTotalByFilter").Str("funcInline", "q.collection.CountDocuments").Msg("categoryQuery")
 		return 0, err
 	}
 	return total, nil
@@ -85,11 +85,11 @@ func (q *categoryQuery) UpdateById(id primitive.ObjectID, doc CategoryUpdateById
 		"$set": doc,
 	})
 	if err != nil {
-		logger.Error().Err(err).Str("func", "UpdateById").Str("funcInline", "q.collection.UpdateByID").Msg("categoryQuery")
+		logger.Error().Err(err).Caller().Str("func", "UpdateById").Str("funcInline", "q.collection.UpdateByID").Msg("categoryQuery")
 		return err
 	}
 	if result.MatchedCount == 0 {
-		return response.NewError(fiber.StatusNotFound, response.ErrorResponse{Code: constants.ErrCodeCategoryNotFound, Err: constants.ErrMsgResourceNotFound})
+		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeCategoryNotFound, Data: constants.ErrMsgResourceNotFound})
 	}
 	return nil
 }
@@ -105,9 +105,9 @@ func (q *categoryQuery) GetById(id primitive.ObjectID, opts ...QueryOption) (*mo
 	}
 	if err := q.collection.FindOne(q.ctx, bson.M{"_id": id}, &findOpt).Decode(&category); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, response.NewError(fiber.StatusNotFound, response.ErrorResponse{Code: constants.ErrCodeUserNotFound, Err: constants.ErrMsgResourceNotFound})
+			return nil, response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
 		}
-		logger.Error().Err(err).Str("func", "GetById").Str("funcInline", "q.collection.FindOne").Msg("categoryQuery")
+		logger.Error().Err(err).Caller().Str("func", "GetById").Str("funcInline", "q.collection.FindOne").Msg("categoryQuery")
 		return nil, err
 	}
 	return &category, nil

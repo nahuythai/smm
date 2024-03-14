@@ -1,10 +1,12 @@
 package logging
 
 import (
+	"io"
 	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/natefinch/lumberjack"
 	"github.com/rs/zerolog"
 )
 
@@ -206,16 +208,30 @@ func (c *Config) logger(fc *fiber.Ctx, latency time.Duration, err error) zerolog
 	return zc.Logger()
 }
 
-var logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}).With().Timestamp().Logger()
-
 func GetLogger() *zerolog.Logger {
-	return &logger
+	if logger == nil {
+		var writers = make([]io.Writer, 0, 2)
+		writers = append(writers, zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339})
+		if true {
+			writers = append(writers, &lumberjack.Logger{
+				Filename: "tmp/server.log",
+				MaxSize:  100, // megabytes
+				MaxAge:   7,   // days
+			})
+		}
+		mw := io.MultiWriter(writers...)
+		l := zerolog.New(mw).With().Timestamp().Logger()
+		logger = &l
+	}
+	return logger
 }
+
+var logger *zerolog.Logger
 
 // ConfigDefault is the default config
 var ConfigDefault = Config{
 	Next:     nil,
-	Logger:   &logger,
+	Logger:   GetLogger(),
 	Fields:   []string{FieldIP, FieldLatency, FieldStatus, FieldMethod, FieldURL, FieldError},
 	Messages: []string{"Server error", "Client error", "Success"},
 	Levels:   []zerolog.Level{zerolog.ErrorLevel, zerolog.WarnLevel, zerolog.InfoLevel, zerolog.DebugLevel},

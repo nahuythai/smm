@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"regexp"
 	"smm/internal/database/queries"
-	"smm/pkg/constants"
-	"smm/pkg/response"
 	"smm/pkg/validator"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -18,17 +15,11 @@ type CategoryCreateBodyValidate struct {
 	Title       string `json:"title" validate:"required"`
 	Description string `json:"description" validate:"omitempty"`
 	Image       string `json:"image" validate:"omitempty"`
-	Status      int    `json:"status" validate:"omitempty"`
+	Status      int    `json:"status" validate:"omitempty,oneof=0 1"`
 }
 
 func (v *CategoryCreateBodyValidate) Validate() error {
-	if err := validator.Validate(v); err != nil {
-		return err
-	}
-	if v.Status != constants.CategoryStatusOn && v.Status != constants.CategoryStatusOff {
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: "status invalid", Code: constants.ErrCodeAppBadRequest})
-	}
-	return nil
+	return validator.Validate(v)
 }
 
 type CategoryListBodyValidate struct {
@@ -41,10 +32,7 @@ type CategoryListBodyValidate struct {
 }
 
 func (v *CategoryListBodyValidate) Validate() error {
-	if err := validator.Validate(v); err != nil {
-		return err
-	}
-	return nil
+	return validator.Validate(v)
 }
 
 func (v *CategoryListBodyValidate) Sort() map[string]int {
@@ -94,10 +82,7 @@ type CategoryUpdateBodyValidate struct {
 }
 
 func (v *CategoryUpdateBodyValidate) Validate() error {
-	if err := validator.Validate(v); err != nil {
-		return err
-	}
-	return nil
+	return validator.Validate(v)
 }
 
 type CategoryGetResponse struct {

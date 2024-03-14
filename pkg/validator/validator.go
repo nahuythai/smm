@@ -38,7 +38,7 @@ func Validate(data interface{}) error {
 				errStr += " | "
 			}
 		}
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Code: constants.ErrCodeAppBadRequest, Err: errStr})
+		return response.NewError(fiber.StatusBadRequest, response.Option{Code: constants.ErrCodeAppBadRequest, Data: errStr})
 	}
 	return nil
 }

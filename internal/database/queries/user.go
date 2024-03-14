@@ -22,6 +22,7 @@ type User interface {
 	UpdateApiKeyById(id primitive.ObjectID, apiKey string) error
 	UpdateById(id primitive.ObjectID, doc UserUpdateByIdDoc) error
 	GetById(id primitive.ObjectID, opts ...QueryOption) (user *models.User, err error)
+	GetByUsername(username string, opts ...QueryOption) (user *models.User, err error)
 	UpdateBalanceById(id primitive.ObjectID, balance float64) error
 	UpdatePasswordById(id primitive.ObjectID, password string) error
 }
@@ -43,7 +44,10 @@ func (q *userQuery) CreateOne(user models.User) (*models.User, error) {
 	user.CreatedAt = now
 	result, err := q.collection.InsertOne(q.ctx, user)
 	if err != nil {
-		logger.Error().Err(err).Str("func", "CreateOne").Str("funcInline", "q.collection.InsertOne").Msg("userQuery")
+		if mongo.IsDuplicateKeyError(err) {
+			return nil, response.NewError(fiber.StatusConflict, response.Option{Code: constants.ErrCodeUserExist})
+		}
+		logger.Error().Err(err).Caller().Str("func", "CreateOne").Str("funcInline", "q.collection.InsertOne").Msg("userQuery")
 		return nil, err
 	}
 	user.Id = result.InsertedID.(primitive.ObjectID)
@@ -63,12 +67,12 @@ func (q *userQuery) GetByFilter(filter bson.M, opts ...QueryOption) ([]models.Us
 	}
 	cursor, err := q.collection.Find(q.ctx, filter, &findOpts)
 	if err != nil {
-		logger.Error().Err(err).Str("func", "GetByFilter").Str("funcInline", "q.collection.Find").Msg("userQuery")
+		logger.Error().Err(err).Caller().Str("func", "GetByFilter").Str("funcInline", "q.collection.Find").Msg("userQuery")
 		return nil, err
 	}
 	var users []models.User
 	if err = cursor.All(q.ctx, &users); err != nil {
-		logger.Error().Err(err).Str("func", "GetByFilter").Str("funcInline", "cursor.All").Msg("userQuery")
+		logger.Error().Err(err).Caller().Str("func", "GetByFilter").Str("funcInline", "cursor.All").Msg("userQuery")
 		return nil, err
 	}
 	return users, nil
@@ -76,7 +80,7 @@ func (q *userQuery) GetByFilter(filter bson.M, opts ...QueryOption) ([]models.Us
 
 func (q *userQuery) GetTotalByFilter(filter bson.M) (total int64, err error) {
 	if total, err = q.collection.CountDocuments(q.ctx, filter); err != nil {
-		logger.Error().Err(err).Str("func", "GetTotalByFilter").Str("funcInline", "q.collection.CountDocuments").Msg("userQuery")
+		logger.Error().Err(err).Caller().Str("func", "GetTotalByFilter").Str("funcInline", "q.collection.CountDocuments").Msg("userQuery")
 		return 0, err
 	}
 	return total, nil
@@ -87,11 +91,11 @@ func (q *userQuery) UpdateApiKeyById(id primitive.ObjectID, apiKey string) error
 		"$set": bson.M{"api_key": apiKey, "updated_at": time.Now()},
 	})
 	if err != nil {
-		logger.Error().Err(err).Str("func", "UpdateApiKeyById").Str("funcInline", "q.collection.UpdateByID").Msg("userQuery")
+		logger.Error().Err(err).Caller().Str("func", "UpdateApiKeyById").Str("funcInline", "q.collection.UpdateByID").Msg("userQuery")
 		return err
 	}
 	if result.MatchedCount == 0 {
-		return response.NewError(fiber.StatusNotFound, response.ErrorResponse{Code: constants.ErrCodeUserNotFound, Err: constants.ErrMsgResourceNotFound})
+		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
 	}
 	return nil
 }
@@ -102,11 +106,11 @@ func (q *userQuery) UpdateById(id primitive.ObjectID, doc UserUpdateByIdDoc) err
 		"$set": doc,
 	})
 	if err != nil {
-		logger.Error().Err(err).Str("func", "UpdateById").Str("funcInline", "q.collection.UpdateByID").Msg("userQuery")
+		logger.Error().Err(err).Caller().Str("func", "UpdateById").Str("funcInline", "q.collection.UpdateByID").Msg("userQuery")
 		return err
 	}
 	if result.MatchedCount == 0 {
-		return response.NewError(fiber.StatusNotFound, response.ErrorResponse{Code: constants.ErrCodeUserNotFound, Err: constants.ErrMsgResourceNotFound})
+		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
 	}
 	return nil
 }
@@ -122,9 +126,9 @@ func (q *userQuery) GetById(id primitive.ObjectID, opts ...QueryOption) (*models
 	}
 	if err := q.collection.FindOne(q.ctx, bson.M{"_id": id}, &findOpt).Decode(&user); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, response.NewError(fiber.StatusNotFound, response.ErrorResponse{Code: constants.ErrCodeUserNotFound, Err: constants.ErrMsgResourceNotFound})
+			return nil, response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
 		}
-		logger.Error().Err(err).Str("func", "GetById").Str("funcInline", "q.collection.FindOne").Msg("userQuery")
+		logger.Error().Err(err).Caller().Str("func", "GetById").Str("funcInline", "q.collection.FindOne").Msg("userQuery")
 		return nil, err
 	}
 	return &user, nil
@@ -135,11 +139,11 @@ func (q *userQuery) UpdateBalanceById(id primitive.ObjectID, balance float64) er
 		"$set": bson.M{"balance": balance, "updated_at": time.Now()},
 	})
 	if err != nil {
-		logger.Error().Err(err).Str("func", "UpdateBalanceById").Str("funcInline", "q.collection.UpdateByID").Msg("userQuery")
+		logger.Error().Err(err).Caller().Str("func", "UpdateBalanceById").Str("funcInline", "q.collection.UpdateByID").Msg("userQuery")
 		return err
 	}
 	if result.MatchedCount == 0 {
-		return response.NewError(fiber.StatusNotFound, response.ErrorResponse{Code: constants.ErrCodeUserNotFound, Err: constants.ErrMsgResourceNotFound})
+		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
 	}
 	return nil
 }
@@ -149,11 +153,30 @@ func (q *userQuery) UpdatePasswordById(id primitive.ObjectID, password string) e
 		"$set": bson.M{"password": password, "updated_at": time.Now()},
 	})
 	if err != nil {
-		logger.Error().Err(err).Str("func", "UpdatePasswordById").Str("funcInline", "q.collection.UpdateByID").Msg("userQuery")
+		logger.Error().Err(err).Caller().Str("func", "UpdatePasswordById").Str("funcInline", "q.collection.UpdateByID").Msg("userQuery")
 		return err
 	}
 	if result.MatchedCount == 0 {
-		return response.NewError(fiber.StatusNotFound, response.ErrorResponse{Code: constants.ErrCodeUserNotFound, Err: constants.ErrMsgResourceNotFound})
+		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
 	}
 	return nil
+}
+
+func (q *userQuery) GetByUsername(username string, opts ...QueryOption) (*models.User, error) {
+	var user models.User
+	var opt QueryOption
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	findOpt := options.FindOneOptions{
+		Projection: opt.QueryOnlyField(),
+	}
+	if err := q.collection.FindOne(q.ctx, bson.M{"username": username}, &findOpt).Decode(&user); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
+		}
+		logger.Error().Err(err).Caller().Str("func", "GetByUsername").Str("funcInline", "q.collection.FindOne").Msg("userQuery")
+		return nil, err
+	}
+	return &user, nil
 }

@@ -14,3 +14,12 @@ const (
 	UserLanguageEnglish = iota
 	UserLanguageVietnamese
 )
+
+const (
+	TokenTypeAccess = iota
+	TokenTypeTransaction
+)
+
+const (
+	LocalTransactionKey = "transaction"
+)

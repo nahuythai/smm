@@ -27,7 +27,7 @@ func New() Controller {
 func (ctrl *controller) Create(ctx *fiber.Ctx) error {
 	var requestBody serializers.CategoryCreateBodyValidate
 	if err := ctx.BodyParser(&requestBody); err != nil {
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	if err := requestBody.Validate(); err != nil {
 		return err
@@ -42,13 +42,13 @@ func (ctrl *controller) Create(ctx *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	return response.New(ctx, response.Response{StatusCode: fiber.StatusCreated, Data: fiber.Map{"id": category.Id}})
+	return response.New(ctx, response.Option{StatusCode: fiber.StatusCreated, Data: fiber.Map{"id": category.Id}})
 }
 
 func (ctrl *controller) List(ctx *fiber.Ctx) error {
 	var requestBody serializers.CategoryListBodyValidate
 	if err := ctx.BodyParser(&requestBody); err != nil {
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	if err := requestBody.Validate(); err != nil {
 		return err
@@ -96,7 +96,7 @@ func (ctrl *controller) List(ctx *fiber.Ctx) error {
 func (ctrl *controller) Update(ctx *fiber.Ctx) error {
 	var requestBody serializers.CategoryUpdateBodyValidate
 	if err := ctx.BodyParser(&requestBody); err != nil {
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	if err := requestBody.Validate(); err != nil {
 		return err
@@ -110,14 +110,14 @@ func (ctrl *controller) Update(ctx *fiber.Ctx) error {
 	}); err != nil {
 		return err
 	}
-	return response.New(ctx, response.Response{StatusCode: fiber.StatusOK})
+	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK})
 }
 
 func (ctrl *controller) Get(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	categoryId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	categoryQuery := queries.NewCategory(ctx.Context())
 	queryOption := queries.NewOption()
@@ -126,7 +126,7 @@ func (ctrl *controller) Get(ctx *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	return response.New(ctx, response.Response{StatusCode: fiber.StatusOK, Data: serializers.CategoryGetResponse{
+	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK, Data: serializers.CategoryGetResponse{
 		CreatedAt:   category.CreatedAt,
 		UpdatedAt:   category.UpdatedAt,
 		Title:       category.Title,

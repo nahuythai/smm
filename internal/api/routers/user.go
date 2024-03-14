@@ -2,6 +2,7 @@ package routers
 
 import (
 	userCtrl "smm/internal/api/controller/user"
+	"smm/internal/api/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -31,4 +32,8 @@ func (r *user) V1() {
 	router.Post("/:id/generate-api-key", r.ctrl.GenerateApiKey)
 	router.Post("/update-balance", r.ctrl.UpdateBalance)
 	router.Post("/update-password", r.ctrl.UpdatePassword)
+	router.Post("/login", r.ctrl.Login)
+	transactionRouter := router.Group("/transactions")
+	transactionRouter.Use(middleware.TransactionAuth)
+	transactionRouter.Post("/login-verify", r.ctrl.VerifyLogin)
 }

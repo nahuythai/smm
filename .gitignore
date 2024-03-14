@@ -23,3 +23,4 @@ go.work
 .vscode
 .env
 __debug*
+tmp

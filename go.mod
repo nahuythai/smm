@@ -7,13 +7,18 @@ require (
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/go-playground/validator/v10 v10.19.0
 	github.com/gofiber/fiber/v2 v2.52.2
+	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/natefinch/lumberjack v2.0.0+incompatible
+	github.com/pquerna/otp v1.4.0
 	github.com/rs/zerolog v1.32.0
 	go.mongodb.org/mongo-driver v1.14.0
 	golang.org/x/crypto v0.19.0
 )
 
 require (
+	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
+	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
@@ -42,4 +47,6 @@ require (
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

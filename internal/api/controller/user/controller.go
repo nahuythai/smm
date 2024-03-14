@@ -5,13 +5,21 @@ import (
 	"smm/internal/database/models"
 	"smm/internal/database/queries"
 	"smm/pkg/bcrypt"
+	"smm/pkg/configure"
 	"smm/pkg/constants"
+	"smm/pkg/jwt"
+	"smm/pkg/otp"
 	"smm/pkg/request"
 	"smm/pkg/response"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+var (
+	cfg = configure.GetConfig()
 )
 
 type Controller interface {
@@ -22,6 +30,8 @@ type Controller interface {
 	Get(ctx *fiber.Ctx) error
 	UpdateBalance(ctx *fiber.Ctx) error
 	UpdatePassword(ctx *fiber.Ctx) error
+	Login(ctx *fiber.Ctx) error
+	VerifyLogin(ctx *fiber.Ctx) error
 }
 type controller struct{}
 
@@ -32,7 +42,7 @@ func New() Controller {
 func (ctrl *controller) Create(ctx *fiber.Ctx) error {
 	var requestBody serializers.UserCreateBodyValidate
 	if err := ctx.BodyParser(&requestBody); err != nil {
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	if err := requestBody.Validate(); err != nil {
 		return err
@@ -50,19 +60,28 @@ func (ctrl *controller) Create(ctx *fiber.Ctx) error {
 		EmailVerification: false,
 		Address:           requestBody.Address,
 		Password:          bcrypt.GeneratePassword(requestBody.Password),
+		TwoFAEnable:       requestBody.TwoFAEnable,
 		Avatar:            requestBody.Avatar,
 		ApiKey:            utils.UUIDv4(),
 	})
 	if err != nil {
 		return err
 	}
-	return response.New(ctx, response.Response{StatusCode: fiber.StatusCreated, Data: fiber.Map{"id": user.Id}})
+	secretKey, _ := otp.GetGlobal().GenerateSecretKey(requestBody.Username)
+	if _, err = queries.NewOtp(ctx.Context()).CreateOne(models.Otp{
+		UserId:    user.Id,
+		SecretKey: secretKey.Secret(),
+		OtpUrl:    secretKey.URL(),
+	}); err != nil {
+		return err
+	}
+	return response.New(ctx, response.Option{StatusCode: fiber.StatusCreated, Data: fiber.Map{"id": user.Id}})
 }
 
 func (ctrl *controller) List(ctx *fiber.Ctx) error {
 	var requestBody serializers.UserListBodyValidate
 	if err := ctx.BodyParser(&requestBody); err != nil {
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	if err := requestBody.Validate(); err != nil {
 		return err
@@ -122,20 +141,20 @@ func (ctrl *controller) GenerateApiKey(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	userId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	userQuery := queries.NewUser(ctx.Context())
 	apiKey := utils.UUIDv4()
 	if err := userQuery.UpdateApiKeyById(userId, apiKey); err != nil {
 		return err
 	}
-	return response.New(ctx, response.Response{StatusCode: fiber.StatusOK, Data: fiber.Map{"api_key": apiKey}})
+	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK, Data: fiber.Map{"api_key": apiKey}})
 }
 
 func (ctrl *controller) Update(ctx *fiber.Ctx) error {
 	var requestBody serializers.UserUpdateBodyValidate
 	if err := ctx.BodyParser(&requestBody); err != nil {
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	if err := requestBody.Validate(); err != nil {
 		return err
@@ -156,14 +175,14 @@ func (ctrl *controller) Update(ctx *fiber.Ctx) error {
 	}); err != nil {
 		return err
 	}
-	return response.New(ctx, response.Response{StatusCode: fiber.StatusOK})
+	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK})
 }
 
 func (ctrl *controller) Get(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	userId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	userQuery := queries.NewUser(ctx.Context())
 	queryOption := queries.NewOption()
@@ -175,7 +194,7 @@ func (ctrl *controller) Get(ctx *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	return response.New(ctx, response.Response{StatusCode: fiber.StatusOK, Data: serializers.UserGetResponse{
+	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK, Data: serializers.UserGetResponse{
 		UpdatedAt:         user.UpdatedAt,
 		CreatedAt:         user.CreatedAt,
 		LastActive:        user.LastActive,
@@ -197,7 +216,7 @@ func (ctrl *controller) Get(ctx *fiber.Ctx) error {
 func (ctrl *controller) UpdateBalance(ctx *fiber.Ctx) error {
 	var requestBody serializers.UserUpdateBalanceBodyValidate
 	if err := ctx.BodyParser(&requestBody); err != nil {
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	if err := requestBody.Validate(); err != nil {
 		return err
@@ -206,13 +225,13 @@ func (ctrl *controller) UpdateBalance(ctx *fiber.Ctx) error {
 	if err := userQuery.UpdateBalanceById(requestBody.Id, requestBody.Balance); err != nil {
 		return err
 	}
-	return response.New(ctx, response.Response{StatusCode: fiber.StatusOK})
+	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK})
 }
 
 func (ctrl *controller) UpdatePassword(ctx *fiber.Ctx) error {
 	var requestBody serializers.UserUpdatePasswordBodyValidate
 	if err := ctx.BodyParser(&requestBody); err != nil {
-		return response.NewError(fiber.StatusBadRequest, response.ErrorResponse{Err: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	if err := requestBody.Validate(); err != nil {
 		return err
@@ -221,5 +240,70 @@ func (ctrl *controller) UpdatePassword(ctx *fiber.Ctx) error {
 	if err := userQuery.UpdatePasswordById(requestBody.Id, bcrypt.GeneratePassword(requestBody.Password)); err != nil {
 		return err
 	}
-	return response.New(ctx, response.Response{StatusCode: fiber.StatusOK})
+	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK})
+}
+
+func (ctrl *controller) Login(ctx *fiber.Ctx) error {
+	var requestBody serializers.UserLoginBodyValidate
+	if err := ctx.BodyParser(&requestBody); err != nil {
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+	}
+	if err := requestBody.Validate(); err != nil {
+		return err
+	}
+	userQuery := queries.NewUser(ctx.Context())
+	queryOption := queries.NewOption()
+	queryOption.SetOnlyField("password", "2fa_enable", "_id")
+	user, err := userQuery.GetByUsername(requestBody.Username, queryOption)
+	if err != nil {
+		if err.(*response.Option).Code == constants.ErrCodeUserNotFound {
+			return response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeAppUnauthorized})
+		}
+		return err
+	}
+	if !bcrypt.ComparePassword(user.Password, requestBody.Password) {
+		return response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeAppUnauthorized})
+	}
+	if user.TwoFAEnable {
+		transaction, err := queries.NewTransaction(ctx.Context()).CreateOne(models.Transaction{
+			ExpiredAt: time.Now().Add(cfg.TransactionTimeout),
+			UserId:    user.Id,
+		})
+		if err != nil {
+			return err
+		}
+		token, err := jwt.GetGlobal().GenerateToken(transaction.Id, false, constants.TokenTypeTransaction)
+		if err != nil {
+			return err
+		}
+		return response.New(ctx, response.Option{StatusCode: fiber.StatusOK, Data: fiber.Map{"token": token, "token_type": constants.TokenTypeTransaction}})
+	}
+	token, err := jwt.GetGlobal().GenerateToken(user.Id, false, constants.TokenTypeAccess)
+	if err != nil {
+		return err
+	}
+	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK, Data: fiber.Map{"token": token, "token_type": constants.TokenTypeAccess}})
+}
+
+func (ctrl *controller) VerifyLogin(ctx *fiber.Ctx) error {
+	transaction := ctx.Locals(constants.LocalTransactionKey).(*models.Transaction)
+	var requestBody serializers.UserLoginVerifyBodyValidate
+	if err := ctx.BodyParser(&requestBody); err != nil {
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+	}
+	if err := requestBody.Validate(); err != nil {
+		return err
+	}
+	otpCode, err := queries.NewOtp(ctx.Context()).GetByUserId(transaction.UserId)
+	if err != nil {
+		return err
+	}
+	if !otp.GetGlobal().Validate(requestBody.Code, otpCode.SecretKey) {
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgOtpWrong, Code: constants.ErrCodeOtpWrong})
+	}
+	token, err := jwt.GetGlobal().GenerateToken(transaction.Id, false, constants.TokenTypeTransaction)
+	if err != nil {
+		return err
+	}
+	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK, Data: fiber.Map{"token": token, "token_type": constants.TokenTypeAccess}})
 }

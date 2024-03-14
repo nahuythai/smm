@@ -170,3 +170,26 @@ func (v *UserUpdatePasswordBodyValidate) Validate() error {
 	}
 	return nil
 }
+
+type UserLoginBodyValidate struct {
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required,min=3,max=20"`
+}
+
+func (v *UserLoginBodyValidate) Validate() error {
+	if err := validator.Validate(v); err != nil {
+		return err
+	}
+	return nil
+}
+
+type UserLoginVerifyBodyValidate struct {
+	Code string `json:"code" validate:"required"`
+}
+
+func (v *UserLoginVerifyBodyValidate) Validate() error {
+	if err := validator.Validate(v); err != nil {
+		return err
+	}
+	return nil
+}
