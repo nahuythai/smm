@@ -22,4 +22,16 @@ const (
 
 const (
 	LocalTransactionKey = "transaction"
+	LocalUserKey        = "user"
+)
+
+const (
+	UserRoleUser = iota
+	UserRoleAdmin
+	UserRoleSuperAdmin
+)
+
+const (
+	TransactionTypeVerifyLogin = iota
+	TransactionTypeVerifyEmail
 )

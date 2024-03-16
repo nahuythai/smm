@@ -25,6 +25,8 @@ type User interface {
 	GetByUsername(username string, opts ...QueryOption) (user *models.User, err error)
 	UpdateBalanceById(id primitive.ObjectID, balance float64) error
 	UpdatePasswordById(id primitive.ObjectID, password string) error
+	CreateIndexes() error
+	UpdateEmailVerificationById(id primitive.ObjectID, verified bool) error
 }
 type userQuery struct {
 	ctx        context.Context
@@ -55,7 +57,7 @@ func (q *userQuery) CreateOne(user models.User) (*models.User, error) {
 }
 
 func (q *userQuery) GetByFilter(filter bson.M, opts ...QueryOption) ([]models.User, error) {
-	var opt QueryOption
+	opt := NewOption()
 	if len(opts) > 0 {
 		opt = opts[0]
 	}
@@ -117,7 +119,7 @@ func (q *userQuery) UpdateById(id primitive.ObjectID, doc UserUpdateByIdDoc) err
 
 func (q *userQuery) GetById(id primitive.ObjectID, opts ...QueryOption) (*models.User, error) {
 	var user models.User
-	var opt QueryOption
+	opt := NewOption()
 	if len(opts) > 0 {
 		opt = opts[0]
 	}
@@ -164,7 +166,7 @@ func (q *userQuery) UpdatePasswordById(id primitive.ObjectID, password string) e
 
 func (q *userQuery) GetByUsername(username string, opts ...QueryOption) (*models.User, error) {
 	var user models.User
-	var opt QueryOption
+	opt := NewOption()
 	if len(opts) > 0 {
 		opt = opts[0]
 	}
@@ -179,4 +181,28 @@ func (q *userQuery) GetByUsername(username string, opts ...QueryOption) (*models
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (q *userQuery) CreateIndexes() error {
+	indexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "username", Value: 1}}, Options: options.Index().SetUnique(true)}}
+	if _, err := database.DB.Collection(models.UserCollectionName).Indexes().CreateMany(context.Background(), indexes); err != nil {
+		logger.Error().Err(err).Caller().Str("func", "CreateIndexes").Str("funcInline", "Indexes().CreateMany").Msg("userQuery")
+		return err
+	}
+	return nil
+}
+
+func (q *userQuery) UpdateEmailVerificationById(id primitive.ObjectID, verified bool) error {
+	result, err := q.collection.UpdateByID(q.ctx, id, bson.M{
+		"$set": bson.M{"email_verification": verified, "updated_at": time.Now()},
+	})
+	if err != nil {
+		logger.Error().Err(err).Caller().Str("func", "UpdateEmailVerificationById").Str("funcInline", "q.collection.UpdateByID").Msg("userQuery")
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
+	}
+	return nil
 }

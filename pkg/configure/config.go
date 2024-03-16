@@ -11,14 +11,17 @@ import (
 var cfg *Config
 
 type Config struct {
-	Debug               bool          `env:"DEBUG" envDefault:"false"`
-	Host                string        `env:"HOST" envDefault:"0.0.0.0"`
-	Port                string        `env:"PORT" envDefault:"8000"`
-	SecretKey           string        `env:"SECRET_KEY" envDefault:"!change_me!"`
-	MongoRequestTimeout time.Duration `env:"MONGO_REQUEST_TIMEOUT" envDefault:"3m"`
-	TransactionTimeout  time.Duration `env:"TRANSACTION_TIMEOUT" envDefault:"5m"`
-	MongoDBUrl          string        `env:"MONGODB_URL" envDefault:"mongodb://localhost:27017"`
-	MongoDBName         string        `env:"MONGODB_NAME" envDefault:"db_smm"`
+	Debug                          bool          `env:"DEBUG" envDefault:"false"`
+	Host                           string        `env:"HOST" envDefault:"0.0.0.0"`
+	Port                           string        `env:"PORT" envDefault:"8000"`
+	ServerDomain                   string        `env:"SERVER_DOMAIN" envDefault:"localhost:8000"`
+	SecretKey                      string        `env:"SECRET_KEY" envDefault:"!change_me!"`
+	MongoRequestTimeout            time.Duration `env:"MONGO_REQUEST_TIMEOUT" envDefault:"3m"`
+	TransactionDuration            time.Duration `env:"TRANSACTION_DURATION" envDefault:"15m"`
+	VerifyEmailTransactionDuration time.Duration `env:"VERIFY_EMAIL_TRANSACTION_DURATION" envDefault:"24h"`
+	AccessTokenDuration            time.Duration `env:"ACCESS_TOKEN_DURATION" envDefault:"24h"`
+	MongoDBUrl                     string        `env:"MONGODB_URL" envDefault:"mongodb://localhost:27017"`
+	MongoDBName                    string        `env:"MONGODB_NAME" envDefault:"db_smm"`
 }
 
 func GetConfig() *Config {

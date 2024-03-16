@@ -10,29 +10,25 @@ import (
 var global *service
 
 var defaultOption = Option{
-	AccessTokenDuration: 24 * time.Hour,
-	Issuer:              "SMM",
+	Issuer: "SMM",
 }
 
 type CustomClaims struct {
-	Admin bool `json:"admin"`
-	Type  int  `json:"type"`
+	Type int `json:"type"`
 	jwt.RegisteredClaims
 }
 
 type Option struct {
-	AccessTokenDuration time.Duration
-	Issuer              string
+	Issuer string
 }
 
 type service struct {
-	accessTokenDuration time.Duration
-	secretKey           string
-	issuer              string
+	secretKey string
+	issuer    string
 }
 type Service interface {
 	InitGlobal()
-	GenerateToken(id primitive.ObjectID, isAdmin bool, tokenType int) (string, error)
+	GenerateToken(id primitive.ObjectID, tokenType int, duration time.Duration) (string, error)
 	ValidateToken(signedString string) (*CustomClaims, error)
 }
 
@@ -44,9 +40,8 @@ func New(secretKey string, opts ...Option) Service {
 		opt = opts[0]
 	}
 	return &service{
-		secretKey:           secretKey,
-		accessTokenDuration: opt.AccessTokenDuration,
-		issuer:              opt.Issuer,
+		secretKey: secretKey,
+		issuer:    opt.Issuer,
 	}
 }
 
@@ -58,12 +53,11 @@ func GetGlobal() *service {
 	return global
 }
 
-func (s *service) GenerateToken(id primitive.ObjectID, isAdmin bool, tokenType int) (string, error) {
+func (s *service) GenerateToken(id primitive.ObjectID, tokenType int, duration time.Duration) (string, error) {
 	claims := CustomClaims{
-		true,
 		tokenType,
 		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.accessTokenDuration)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    s.issuer,

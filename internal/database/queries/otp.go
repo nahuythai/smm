@@ -49,7 +49,7 @@ func (q *otpQuery) CreateOne(otp models.Otp) (*models.Otp, error) {
 
 func (q *otpQuery) GetByUserId(userId primitive.ObjectID, opts ...QueryOption) (*models.Otp, error) {
 	var otp models.Otp
-	var opt = NewOption()
+	opt := NewOption()
 	if len(opts) > 0 {
 		opt = opts[0]
 	}
@@ -64,4 +64,14 @@ func (q *otpQuery) GetByUserId(userId primitive.ObjectID, opts ...QueryOption) (
 		return nil, err
 	}
 	return &otp, nil
+}
+
+func (q *otpQuery) CreateIndexes() error {
+	indexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "user_id", Value: 1}}, Options: options.Index().SetUnique(true)}}
+	if _, err := database.DB.Collection(models.UserCollectionName).Indexes().CreateMany(context.Background(), indexes); err != nil {
+		logger.Error().Err(err).Caller().Str("func", "CreateIndexes").Str("funcInline", "Indexes().CreateMany").Msg("otpQuery")
+		return err
+	}
+	return nil
 }

@@ -17,8 +17,8 @@ import (
 
 type Transaction interface {
 	CreateOne(transaction models.Transaction) (*models.Transaction, error)
-	// UpdateById(id primitive.ObjectID, doc TransactionUpdateByIdDoc) error
 	GetById(id primitive.ObjectID, opts ...QueryOption) (transaction *models.Transaction, err error)
+	DeleteById(id primitive.ObjectID) error
 }
 type transactionQuery struct {
 	ctx        context.Context
@@ -45,21 +45,6 @@ func (q *transactionQuery) CreateOne(transaction models.Transaction) (*models.Tr
 	return &transaction, nil
 }
 
-// func (q *transactionQuery) UpdateById(id primitive.ObjectID, doc TransactionUpdateByIdDoc) error {
-// 	doc.UpdatedAt = time.Now()
-// 	result, err := q.collection.UpdateByID(q.ctx, id, bson.M{
-// 		"$set": doc,
-// 	})
-// 	if err != nil {
-// 		logger.Error().Err(err).Caller().Str("func", "UpdateById").Str("funcInline", "q.collection.UpdateByID").Msg("transactionQuery")
-// 		return err
-// 	}
-// 	if result.MatchedCount == 0 {
-// 		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeTransactionNotFound, Data: constants.ErrMsgResourceNotFound})
-// 	}
-// 	return nil
-// }
-
 func (q *transactionQuery) GetById(id primitive.ObjectID, opts ...QueryOption) (*models.Transaction, error) {
 	var transaction models.Transaction
 	opt := NewOption()
@@ -77,4 +62,22 @@ func (q *transactionQuery) GetById(id primitive.ObjectID, opts ...QueryOption) (
 		return nil, err
 	}
 	return &transaction, nil
+}
+
+func (q *transactionQuery) DeleteById(id primitive.ObjectID) error {
+	if _, err := q.collection.DeleteOne(q.ctx, bson.M{"_id": id}); err != nil {
+		logger.Error().Err(err).Caller().Str("func", "DeleteById").Str("funcInline", "q.collection.DeleteOne").Msg("transactionQuery")
+		return err
+	}
+	return nil
+}
+
+func (q *transactionQuery) CreateIndexes() error {
+	indexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "expired_at", Value: 1}}, Options: options.Index().SetExpireAfterSeconds(0)}}
+	if _, err := database.DB.Collection(models.UserCollectionName).Indexes().CreateMany(context.Background(), indexes); err != nil {
+		logger.Error().Err(err).Caller().Str("func", "CreateIndexes").Str("funcInline", "Indexes().CreateMany").Msg("transactionQuery")
+		return err
+	}
+	return nil
 }

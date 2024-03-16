@@ -24,6 +24,7 @@ type User struct {
 	Password          string             `bson:"password"`
 	Avatar            string             `bson:"avatar"`
 	ApiKey            string             `bson:"api_key"`
+	Role              int                `bson:"role"`
 	Id                primitive.ObjectID `bson:"_id,omitempty"`
 }
 

@@ -137,6 +137,7 @@ type UserGetResponse struct {
 	PhoneNumber       string             `json:"phone_number"`
 	Language          int                `json:"language"`
 	Status            int                `json:"status"`
+	Role              int                `json:"role"`
 	Balance           float64            `json:"balance"`
 	Email             string             `json:"email"`
 	EmailVerification bool               `json:"email_verification"`
@@ -188,6 +189,22 @@ type UserLoginVerifyBodyValidate struct {
 }
 
 func (v *UserLoginVerifyBodyValidate) Validate() error {
+	if err := validator.Validate(v); err != nil {
+		return err
+	}
+	return nil
+}
+
+type UserRegisterBodyValidate struct {
+	FirstName   string `json:"first_name" validate:"omitempty"`
+	LastName    string `json:"last_name" validate:"omitempty"`
+	Username    string `json:"username" validate:"required,lowercase,alphanum,min=3,max=20"`
+	PhoneNumber string `json:"phone_number" validate:"required"`
+	Email       string `json:"email" validate:"required,lowercase,email"`
+	Password    string `json:"password" validate:"required,min=3,max=20"`
+}
+
+func (v *UserRegisterBodyValidate) Validate() error {
 	if err := validator.Validate(v); err != nil {
 		return err
 	}

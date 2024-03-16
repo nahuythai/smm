@@ -19,8 +19,11 @@ const (
 )
 
 const (
-	ErrCodeUserNotFound = "2000"
-	ErrCodeUserExist    = "2001"
+	ErrCodeUserNotFound                = "2000"
+	ErrCodeUserExist                   = "2001"
+	ErrCodeUserBanned                  = "2002"
+	ErrCodeUserInvalidEmail            = "2003"
+	ErrCodeUserAdminPermissionRequired = "2004"
 )
 
 const (

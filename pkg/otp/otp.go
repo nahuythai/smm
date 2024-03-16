@@ -53,7 +53,7 @@ func GetGlobal() *service {
 
 func (s *service) GeneratePassCode(secretKey string) (string, error) {
 	passcode, err := totp.GenerateCodeCustom(secretKey, time.Now(), totp.ValidateOpts{
-		Period:    60,
+		Period:    60, //nolint:gomnd
 		Skew:      1,
 		Digits:    otp.Digits(s.digits),
 		Algorithm: otp.AlgorithmSHA1,
@@ -69,7 +69,7 @@ func (s *service) GenerateSecretKey(username string) (*otp.Key, error) {
 	return totp.Generate(totp.GenerateOpts{
 		Issuer:      s.issuer,
 		AccountName: username,
-		Period:      60,
+		Period:      60, //nolint:gomnd
 		Digits:      otp.Digits(s.digits),
 		Algorithm:   otp.AlgorithmSHA1,
 	})

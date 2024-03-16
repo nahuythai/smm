@@ -48,7 +48,7 @@ func (q *categoryQuery) CreateOne(category models.Category) (*models.Category, e
 }
 
 func (q *categoryQuery) GetByFilter(filter bson.M, opts ...QueryOption) ([]models.Category, error) {
-	var opt QueryOption
+	opt := NewOption()
 	if len(opts) > 0 {
 		opt = opts[0]
 	}
@@ -96,7 +96,7 @@ func (q *categoryQuery) UpdateById(id primitive.ObjectID, doc CategoryUpdateById
 
 func (q *categoryQuery) GetById(id primitive.ObjectID, opts ...QueryOption) (*models.Category, error) {
 	var category models.Category
-	var opt QueryOption
+	opt := NewOption()
 	if len(opts) > 0 {
 		opt = opts[0]
 	}
