@@ -12,8 +12,7 @@ import (
 )
 
 type UserCreateBodyValidate struct {
-	FirstName         string  `json:"first_name" validate:"omitempty"`
-	LastName          string  `json:"last_name" validate:"omitempty"`
+	DisplayName       string  `json:"display_name" validate:"omitempty"`
 	Username          string  `json:"username" validate:"required,lowercase,alphanum,min=3,max=20"`
 	PhoneNumber       string  `json:"phone_number" validate:"omitempty"`
 	Language          int     `json:"language" validate:"omitempty"`
@@ -79,21 +78,14 @@ func (v *UserListBodyValidate) GetFilter() bson.M {
 }
 
 type UserListResponse struct {
-	UpdatedAt         time.Time          `json:"updated_at"`
-	CreatedAt         time.Time          `json:"created_at"`
-	LastActive        *time.Time         `json:"last_active"`
-	Username          string             `json:"username"`
-	PhoneNumber       string             `json:"phone_number"`
-	Language          int                `json:"language"`
-	Status            int                `json:"status"`
-	Balance           float64            `json:"balance"`
-	Email             string             `json:"email"`
-	EmailVerification bool               `json:"email_verification"`
-	TwoFAEnable       bool               `json:"2fa_enable"`
-	Address           string             `json:"address"`
-	Avatar            string             `json:"avatar"`
-	ApiKey            string             `json:"api_key"`
-	Id                primitive.ObjectID `json:"id"`
+	Username    string             `json:"username"`
+	DisplayName string             `json:"display_name"`
+	PhoneNumber string             `json:"phone_number"`
+	Status      int                `json:"status"`
+	Balance     float64            `json:"balance"`
+	Email       string             `json:"email"`
+	Avatar      string             `json:"avatar"`
+	Id          primitive.ObjectID `json:"id"`
 }
 
 type UserGenerateAPIKey struct {
@@ -109,8 +101,7 @@ func (v *UserGenerateAPIKey) Validate() error {
 
 type UserUpdateBodyValidate struct {
 	Id                primitive.ObjectID `json:"id" validate:"required"`
-	FirstName         *string            `json:"first_name" validate:"omitempty"`
-	LastName          *string            `json:"last_name" validate:"omitempty"`
+	DisplayName       *string            `json:"display_name" validate:"omitempty"`
 	Username          string             `json:"username" validate:"required,lowercase,alphanum,min=3,max=20"`
 	PhoneNumber       *string            `json:"phone_number" validate:"omitempty"`
 	Language          *int               `json:"language" validate:"omitempty"`
@@ -133,6 +124,7 @@ type UserGetResponse struct {
 	UpdatedAt         time.Time          `json:"updated_at"`
 	CreatedAt         time.Time          `json:"created_at"`
 	LastActive        *time.Time         `json:"last_active"`
+	DisplayName       string             `json:"display_name"`
 	Username          string             `json:"username"`
 	PhoneNumber       string             `json:"phone_number"`
 	Language          int                `json:"language"`
@@ -196,8 +188,7 @@ func (v *UserLoginVerifyBodyValidate) Validate() error {
 }
 
 type UserRegisterBodyValidate struct {
-	FirstName   string `json:"first_name" validate:"omitempty"`
-	LastName    string `json:"last_name" validate:"omitempty"`
+	DisplayName string `json:"display_name" validate:"omitempty"`
 	Username    string `json:"username" validate:"required,lowercase,alphanum,min=3,max=20"`
 	PhoneNumber string `json:"phone_number" validate:"required"`
 	Email       string `json:"email" validate:"required,lowercase,email"`

@@ -35,3 +35,13 @@ const (
 	TransactionTypeVerifyLogin = iota
 	TransactionTypeVerifyEmail
 )
+
+const (
+	ServiceStatusOn = iota
+	ServiceStatusOff
+)
+
+const (
+	ProviderStatusOn = iota
+	ProviderStatusOff
+)

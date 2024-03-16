@@ -111,6 +111,9 @@ func (f *filterOption) BuildAndQuery() bson.M {
 	}
 	query := make([]bson.M, 0, len(f.filters))
 	for _, filter := range f.filters {
+		if value, err := primitive.ObjectIDFromHex(fmt.Sprintf("%v", filter.Value)); err == nil {
+			filter.Value = value
+		}
 		if filter.Method == QueryFilterMethodRegex {
 			filter.Value = primitive.Regex{Pattern: regexp.QuoteMeta(fmt.Sprintf("%v", filter.Value)), Options: "i"}
 		}

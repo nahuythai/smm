@@ -1,4 +1,4 @@
-package category
+package provider
 
 import (
 	"smm/internal/api/serializers"
@@ -26,44 +26,47 @@ func New() Controller {
 }
 
 func (ctrl *controller) Create(ctx *fiber.Ctx) error {
-	var requestBody serializers.CategoryCreateBodyValidate
+	var requestBody serializers.ProviderCreateBodyValidate
 	if err := ctx.BodyParser(&requestBody); err != nil {
 		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	if err := requestBody.Validate(); err != nil {
 		return err
 	}
-	categoryQuery := queries.NewCategory(ctx.Context())
-	category, err := categoryQuery.CreateOne(models.Category{
-		Title:       requestBody.Title,
+	providerQuery := queries.NewProvider(ctx.Context())
+	provider, err := providerQuery.CreateOne(models.Provider{
+		Status:      constants.ProviderStatusOn,
+		ApiName:     requestBody.ApiName,
+		ApiKey:      requestBody.ApiKey,
 		Description: requestBody.Description,
-		Image:       requestBody.Image,
-		Status:      constants.CategoryStatusOn,
+		Rate:        requestBody.Rate,
+		Url:         requestBody.Url,
+		Balance:     0,
 	})
 	if err != nil {
 		return err
 	}
-	return response.New(ctx, response.Option{StatusCode: fiber.StatusCreated, Data: fiber.Map{"id": category.Id}})
+	return response.New(ctx, response.Option{StatusCode: fiber.StatusCreated, Data: fiber.Map{"id": provider.Id}})
 }
 
 func (ctrl *controller) List(ctx *fiber.Ctx) error {
-	var requestBody serializers.CategoryListBodyValidate
+	var requestBody serializers.ProviderListBodyValidate
 	if err := ctx.BodyParser(&requestBody); err != nil {
 		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	if err := requestBody.Validate(); err != nil {
 		return err
 	}
-	categoryQuery := queries.NewCategory(ctx.Context())
+	providerQuery := queries.NewProvider(ctx.Context())
 	queryOption := queries.NewOption()
 	pagination := request.NewPagination(requestBody.Page, requestBody.Limit)
 	queryOption.SetPagination(pagination)
-	queryOption.SetOnlyField("title", "description", "created_at", "updated_at", "_id", "status", "image")
+	queryOption.SetOnlyField("api_name", "description", "_id", "status", "balance")
 	totalChan := make(chan int64, 1)
 	errChan := make(chan error, 1)
 
 	go func() {
-		total, err := categoryQuery.GetTotalByFilter(requestBody.GetFilter())
+		total, err := providerQuery.GetTotalByFilter(requestBody.GetFilter())
 		if err != nil {
 			errChan <- err
 			return
@@ -72,22 +75,20 @@ func (ctrl *controller) List(ctx *fiber.Ctx) error {
 		errChan <- nil
 	}()
 	queryOption.AddSort(requestBody.Sort())
-	categories, err := categoryQuery.GetByFilter(requestBody.GetFilter(), queryOption)
+	categories, err := providerQuery.GetByFilter(requestBody.GetFilter(), queryOption)
 	if err != nil {
 		return err
 	}
 	if err = <-errChan; err != nil {
 		return err
 	}
-	res := make([]serializers.CategoryListResponse, len(categories))
-	for i, category := range categories {
-		res[i].CreatedAt = category.CreatedAt
-		res[i].UpdatedAt = category.UpdatedAt
-		res[i].Title = category.Title
-		res[i].Description = category.Description
-		res[i].Id = category.Id
-		res[i].Status = category.Status
-		res[i].Image = category.Image
+	res := make([]serializers.ProviderListResponse, len(categories))
+	for i, provider := range categories {
+		res[i].ApiName = provider.ApiName
+		res[i].Status = provider.Status
+		res[i].Balance = provider.Balance
+		res[i].Description = provider.Description
+		res[i].Id = provider.Id
 
 	}
 	pagination.SetTotal(<-totalChan)
@@ -95,19 +96,21 @@ func (ctrl *controller) List(ctx *fiber.Ctx) error {
 }
 
 func (ctrl *controller) Update(ctx *fiber.Ctx) error {
-	var requestBody serializers.CategoryUpdateBodyValidate
+	var requestBody serializers.ProviderUpdateBodyValidate
 	if err := ctx.BodyParser(&requestBody); err != nil {
 		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
 	if err := requestBody.Validate(); err != nil {
 		return err
 	}
-	categoryQuery := queries.NewCategory(ctx.Context())
-	if err := categoryQuery.UpdateById(requestBody.Id, queries.CategoryUpdateByIdDoc{
-		Title:       requestBody.Title,
-		Image:       requestBody.Image,
+	providerQuery := queries.NewProvider(ctx.Context())
+	if err := providerQuery.UpdateById(requestBody.Id, queries.ProviderUpdateByIdDoc{
+		ApiName:     requestBody.ApiName,
+		ApiKey:      requestBody.ApiKey,
 		Description: requestBody.Description,
-		Status:      requestBody.Status,
+		Status:      *requestBody.Status,
+		Rate:        requestBody.Rate,
+		Url:         requestBody.Url,
 	}); err != nil {
 		return err
 	}
@@ -116,36 +119,37 @@ func (ctrl *controller) Update(ctx *fiber.Ctx) error {
 
 func (ctrl *controller) Get(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
-	categoryId, err := primitive.ObjectIDFromHex(id)
+	providerId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
-	categoryQuery := queries.NewCategory(ctx.Context())
+	providerQuery := queries.NewProvider(ctx.Context())
 	queryOption := queries.NewOption()
-	queryOption.SetOnlyField("title", "description", "created_at", "updated_at", "_id", "status", "image")
-	category, err := categoryQuery.GetById(categoryId, queryOption)
+	queryOption.SetOnlyField("api_name", "description", "_id", "api_key", "url", "status", "balance", "rate")
+	provider, err := providerQuery.GetById(providerId, queryOption)
 	if err != nil {
 		return err
 	}
-	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK, Data: serializers.CategoryGetResponse{
-		CreatedAt:   category.CreatedAt,
-		UpdatedAt:   category.UpdatedAt,
-		Title:       category.Title,
-		Description: category.Description,
-		Id:          category.Id,
-		Status:      category.Status,
-		Image:       category.Image,
+	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK, Data: serializers.ProviderGetResponse{
+		Status:      provider.Status,
+		ApiName:     provider.ApiName,
+		ApiKey:      provider.ApiKey,
+		Description: provider.Description,
+		Url:         provider.Url,
+		Balance:     provider.Balance,
+		Rate:        provider.Rate,
+		Id:          provider.Id,
 	}})
 }
 
 func (ctrl *controller) Delete(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
-	categoryId, err := primitive.ObjectIDFromHex(id)
+	providerId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
 	}
-	categoryQuery := queries.NewCategory(ctx.Context())
-	if err := categoryQuery.DeleteById(categoryId); err != nil {
+	providerQuery := queries.NewProvider(ctx.Context())
+	if err := providerQuery.DeleteById(providerId); err != nil {
 		return err
 	}
 	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK})

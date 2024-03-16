@@ -10,8 +10,7 @@ type User struct {
 	UpdatedAt         time.Time          `bson:"updated_at"`
 	CreatedAt         time.Time          `bson:"created_at"`
 	LastActive        *time.Time         `bson:"last_active"`
-	FirstName         string             `bson:"first_name"`
-	LastName          string             `bson:"last_name"`
+	DisplayName       string             `bson:"display_name"`
 	Username          string             `bson:"username"`
 	PhoneNumber       string             `bson:"phone_number"`
 	Language          int                `bson:"language"`

@@ -1,34 +1,34 @@
 package routers
 
 import (
-	categoryCtrl "smm/internal/api/controller/category"
+	providerCtrl "smm/internal/api/controller/provider"
 	"smm/internal/api/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-type Category interface {
+type Provider interface {
 	V1()
 }
 
-type category struct {
-	ctrl   categoryCtrl.Controller
+type provider struct {
+	ctrl   providerCtrl.Controller
 	router fiber.Router
 }
 
-func NewCategory(router fiber.Router) Category {
-	return &category{
-		ctrl:   categoryCtrl.New(),
+func NewProvider(router fiber.Router) Provider {
+	return &provider{
+		ctrl:   providerCtrl.New(),
 		router: router,
 	}
 }
 
-func (r *category) V1() {
+func (r *provider) V1() {
 	r.Admin()
 }
 
-func (r *category) Admin() {
-	router := r.router.Group("/admin/categories")
+func (r *provider) Admin() {
+	router := r.router.Group("/admin/providers")
 	router.Use(middleware.UserAuth, middleware.AdminPermission)
 	router.Post("/", r.ctrl.Create)
 	router.Post("/list", r.ctrl.List)

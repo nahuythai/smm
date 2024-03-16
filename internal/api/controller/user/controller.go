@@ -59,8 +59,7 @@ func (ctrl *controller) Create(ctx *fiber.Ctx) error {
 	}
 	userQuery := queries.NewUser(ctx.Context())
 	user, err := userQuery.CreateOne(models.User{
-		FirstName:         requestBody.FirstName,
-		LastName:          requestBody.LastName,
+		DisplayName:       requestBody.DisplayName,
 		Username:          requestBody.Username,
 		PhoneNumber:       requestBody.PhoneNumber,
 		Language:          requestBody.Language,
@@ -102,9 +101,7 @@ func (ctrl *controller) List(ctx *fiber.Ctx) error {
 	pagination := request.NewPagination(requestBody.Page, requestBody.Limit)
 	queryOption.SetPagination(pagination)
 	queryOption.SetOnlyField(
-		"updated_at", "created_at", "last_active", "username",
-		"phone_number", "language", "status", "balance", "email", "email_verification",
-		"2fa_enable", "address", "avatar", "api_key", "_id")
+		"username", "display_name", "phone_number", "status", "balance", "email", "avatar", "_id")
 	totalChan := make(chan int64, 1)
 	errChan := make(chan error, 1)
 	go func() {
@@ -126,22 +123,14 @@ func (ctrl *controller) List(ctx *fiber.Ctx) error {
 	}
 	res := make([]serializers.UserListResponse, len(users))
 	for i, user := range users {
-		res[i].CreatedAt = user.CreatedAt
-		res[i].UpdatedAt = user.UpdatedAt
-		res[i].Status = user.Status
-		res[i].LastActive = user.LastActive
 		res[i].Username = user.Username
 		res[i].PhoneNumber = user.PhoneNumber
-		res[i].Language = user.Language
 		res[i].Status = user.Status
 		res[i].Balance = user.Balance
 		res[i].Email = user.Email
-		res[i].EmailVerification = user.EmailVerification
-		res[i].TwoFAEnable = user.TwoFAEnable
-		res[i].Address = user.Address
 		res[i].Avatar = user.Avatar
-		res[i].ApiKey = user.ApiKey
 		res[i].Id = user.Id
+		res[i].DisplayName = user.DisplayName
 
 	}
 	pagination.SetTotal(<-totalChan)
@@ -172,8 +161,7 @@ func (ctrl *controller) Update(ctx *fiber.Ctx) error {
 	}
 	userQuery := queries.NewUser(ctx.Context())
 	if err := userQuery.UpdateById(requestBody.Id, queries.UserUpdateByIdDoc{
-		FirstName:         requestBody.FirstName,
-		LastName:          requestBody.LastName,
+		DisplayName:       requestBody.DisplayName,
 		Username:          requestBody.Username,
 		PhoneNumber:       requestBody.PhoneNumber,
 		Language:          requestBody.Language,
@@ -198,7 +186,7 @@ func (ctrl *controller) Get(ctx *fiber.Ctx) error {
 	userQuery := queries.NewUser(ctx.Context())
 	queryOption := queries.NewOption()
 	queryOption.SetOnlyField(
-		"updated_at", "created_at", "last_active", "first_name", "last_name", "username",
+		"updated_at", "created_at", "last_active", "display_name", "username",
 		"phone_number", "language", "status", "balance", "email", "email_verification",
 		"2fa_enable", "address", "avatar", "api_key", "_id")
 	user, err := userQuery.GetById(userId, queryOption)
@@ -206,6 +194,7 @@ func (ctrl *controller) Get(ctx *fiber.Ctx) error {
 		return err
 	}
 	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK, Data: serializers.UserGetResponse{
+		DisplayName:       user.DisplayName,
 		UpdatedAt:         user.UpdatedAt,
 		CreatedAt:         user.CreatedAt,
 		LastActive:        user.LastActive,
@@ -360,8 +349,7 @@ func (ctrl *controller) Register(ctx *fiber.Ctx) error {
 	}
 	userQuery := queries.NewUser(ctx.Context())
 	user, err := userQuery.CreateOne(models.User{
-		FirstName:         requestBody.FirstName,
-		LastName:          requestBody.LastName,
+		DisplayName:       requestBody.DisplayName,
 		Username:          requestBody.Username,
 		PhoneNumber:       requestBody.PhoneNumber,
 		Status:            constants.UserStatusBanned,

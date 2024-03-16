@@ -38,3 +38,11 @@ const (
 const (
 	ErrCodeTokenWrong = "5000"
 )
+
+const (
+	ErrCodeServiceNotFound = "6000"
+)
+
+const (
+	ErrCodeProviderNotFound = "7000"
+)

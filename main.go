@@ -53,4 +53,6 @@ func addRoute(app fiber.Router) {
 	router := app.Group("/api/v1")
 	routers.NewCategory(router).V1()
 	routers.NewUser(router).V1()
+	routers.NewService(router).V1()
+	routers.NewProvider(router).V1()
 }

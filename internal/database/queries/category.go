@@ -21,6 +21,7 @@ type Category interface {
 	GetTotalByFilter(filter bson.M) (total int64, err error)
 	UpdateById(id primitive.ObjectID, doc CategoryUpdateByIdDoc) error
 	GetById(id primitive.ObjectID, opts ...QueryOption) (category *models.Category, err error)
+	DeleteById(id primitive.ObjectID) error
 }
 type categoryQuery struct {
 	ctx        context.Context
@@ -111,4 +112,16 @@ func (q *categoryQuery) GetById(id primitive.ObjectID, opts ...QueryOption) (*mo
 		return nil, err
 	}
 	return &category, nil
+}
+
+func (q *categoryQuery) DeleteById(id primitive.ObjectID) error {
+	result, err := q.collection.DeleteOne(q.ctx, bson.M{"_id": id})
+	if err != nil {
+		logger.Error().Err(err).Caller().Str("func", "DeleteById").Str("funcInline", "q.collection.DeleteOne").Msg("categoryQuery")
+		return err
+	}
+	if result.DeletedCount == 0 {
+		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
+	}
+	return nil
 }
