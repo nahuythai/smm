@@ -22,6 +22,8 @@ type Service interface {
 	UpdateById(id primitive.ObjectID, doc ServiceUpdateByIdDoc) error
 	GetById(id primitive.ObjectID, opts ...QueryOption) (service *models.Service, err error)
 	DeleteById(id primitive.ObjectID) error
+	GetActiveById(id primitive.ObjectID, opts ...QueryOption) (*models.Service, error)
+	GetByIds(ids []primitive.ObjectID, opts ...QueryOption) ([]models.Service, error)
 }
 type serviceQuery struct {
 	ctx        context.Context
@@ -64,12 +66,12 @@ func (q *serviceQuery) GetByFilter(filter bson.M, opts ...QueryOption) ([]models
 		logger.Error().Err(err).Caller().Str("func", "GetByFilter").Str("funcInline", "q.collection.Find").Msg("serviceQuery")
 		return nil, err
 	}
-	var categories []models.Service
-	if err = cursor.All(q.ctx, &categories); err != nil {
+	var services []models.Service
+	if err = cursor.All(q.ctx, &services); err != nil {
 		logger.Error().Err(err).Caller().Str("func", "GetByFilter").Str("funcInline", "cursor.All").Msg("serviceQuery")
 		return nil, err
 	}
-	return categories, nil
+	return services, nil
 }
 
 func (q *serviceQuery) GetTotalByFilter(filter bson.M) (total int64, err error) {
@@ -124,4 +126,44 @@ func (q *serviceQuery) DeleteById(id primitive.ObjectID) error {
 		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
 	}
 	return nil
+}
+
+func (q *serviceQuery) GetActiveById(id primitive.ObjectID, opts ...QueryOption) (*models.Service, error) {
+	var service models.Service
+	opt := NewOption()
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	findOpt := options.FindOneOptions{
+		Projection: opt.QueryOnlyField(),
+	}
+	if err := q.collection.FindOne(q.ctx, bson.M{"_id": id, "status": constants.ServiceStatusOn}, &findOpt).Decode(&service); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
+		}
+		logger.Error().Err(err).Caller().Str("func", "GetActiveById").Str("funcInline", "q.collection.FindOne").Msg("serviceQuery")
+		return nil, err
+	}
+	return &service, nil
+}
+
+func (q *serviceQuery) GetByIds(ids []primitive.ObjectID, opts ...QueryOption) ([]models.Service, error) {
+	opt := NewOption()
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	findOpts := options.FindOptions{
+		Projection: opt.QueryOnlyField(),
+	}
+	cursor, err := q.collection.Find(q.ctx, bson.M{"_id": bson.M{"$in": ids}}, &findOpts)
+	if err != nil {
+		logger.Error().Err(err).Caller().Str("func", "GetByIds").Str("funcInline", "q.collection.Find").Msg("serviceQuery")
+		return nil, err
+	}
+	var services []models.Service
+	if err = cursor.All(q.ctx, &services); err != nil {
+		logger.Error().Err(err).Caller().Str("func", "GetByIds").Str("funcInline", "cursor.All").Msg("serviceQuery")
+		return nil, err
+	}
+	return services, nil
 }

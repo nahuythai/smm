@@ -106,7 +106,7 @@ func (q *categoryQuery) GetById(id primitive.ObjectID, opts ...QueryOption) (*mo
 	}
 	if err := q.collection.FindOne(q.ctx, bson.M{"_id": id}, &findOpt).Decode(&category); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
+			return nil, response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeCategoryNotFound, Data: constants.ErrMsgResourceNotFound})
 		}
 		logger.Error().Err(err).Caller().Str("func", "GetById").Str("funcInline", "q.collection.FindOne").Msg("categoryQuery")
 		return nil, err
@@ -121,7 +121,7 @@ func (q *categoryQuery) DeleteById(id primitive.ObjectID) error {
 		return err
 	}
 	if result.DeletedCount == 0 {
-		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
+		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeCategoryNotFound, Data: constants.ErrMsgResourceNotFound})
 	}
 	return nil
 }

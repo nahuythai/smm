@@ -17,12 +17,12 @@ const (
 
 const (
 	TokenTypeAccess = iota
-	TokenTypeTransaction
+	TokenTypeSession
 )
 
 const (
-	LocalTransactionKey = "transaction"
-	LocalUserKey        = "user"
+	LocalSessionKey = "session"
+	LocalUserKey    = "user"
 )
 
 const (
@@ -32,8 +32,8 @@ const (
 )
 
 const (
-	TransactionTypeVerifyLogin = iota
-	TransactionTypeVerifyEmail
+	SessionTypeVerifyLogin = iota
+	SessionTypeVerifyEmail
 )
 
 const (
@@ -44,4 +44,23 @@ const (
 const (
 	ProviderStatusOn = iota
 	ProviderStatusOff
+)
+
+const (
+	OrderStatusAwaiting = iota
+	OrderStatusPending
+	OrderStatusProcessing
+	OrderStatusInProgress
+	OrderStatusCompleted
+	OrderStatusPartial
+	OrderStatusCanceled
+	OrderStatusRefunded
+)
+
+const (
+	BackgroundTypeUpdateBalance = iota
+)
+
+const (
+	TransactionTypePlayOrder = iota
 )

@@ -50,3 +50,12 @@ type ProviderUpdateByIdDoc struct {
 	Status      int       `bson:"status"`
 	Rate        float64   `bson:"rate"`
 }
+
+type OrderUpdateByIdDoc struct {
+	UpdatedAt    time.Time `bson:"updated_at"`
+	Status       int       `bson:"status"`
+	StartCounter int64     `bson:"start_counter"`
+	Remains      int64     `bson:"remains"`
+	Note         string    `bson:"note"`
+	Link         string    `bson:"link"`
+}

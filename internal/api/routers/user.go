@@ -34,9 +34,9 @@ func (r *user) User() {
 	userRouter.Post("/register", r.ctrl.Register)
 	userRouter.Get("/verify-email", r.ctrl.VerifyEmail)
 
-	transactionRouter := userRouter.Group("/transactions")
-	transactionRouter.Use(middleware.TransactionAuth)
-	transactionRouter.Post("/login-verify", r.ctrl.VerifyLogin)
+	sessionRouter := userRouter.Group("/sessions")
+	sessionRouter.Use(middleware.SessionAuth)
+	sessionRouter.Post("/login-verify", r.ctrl.VerifyLogin)
 
 	userRouter.Use(middleware.UserAuth)
 	userRouter.Get("/me", r.ctrl.Me)

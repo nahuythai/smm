@@ -17,27 +17,27 @@ var (
 	logger = logging.GetLogger()
 )
 
-func TransactionAuth(ctx *fiber.Ctx) error {
+func SessionAuth(ctx *fiber.Ctx) error {
 	token := ctx.Get("Authorization")
 	token, _ = strings.CutPrefix(token, "Bearer ")
 	payload, err := jwt.GetGlobal().ValidateToken(token)
 	if err != nil {
-		logger.Error().Err(err).Caller().Str("func", "TransactionAuth").Str("funcInline", "jwt.GetGlobal().ValidateToken").Msg("transaction-middleware")
+		logger.Error().Err(err).Caller().Str("func", "SessionAuth").Str("funcInline", "jwt.GetGlobal().ValidateToken").Msg("session-middleware")
 		return response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeTokenWrong, Data: "missing or wrong token"})
 	}
-	if payload.Type != constants.TokenTypeTransaction {
+	if payload.Type != constants.TokenTypeSession {
 		return response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeTokenWrong, Data: "missing or wrong token"})
 	}
 	id, _ := primitive.ObjectIDFromHex(payload.ID)
-	transaction, err := queries.NewTransaction(ctx.Context()).GetById(id)
+	session, err := queries.NewSession(ctx.Context()).GetById(id)
 	if err != nil {
 		if e, ok := err.(*response.Option); ok {
-			if e.Code == constants.ErrCodeTransactionNotFound {
-				return response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeTransactionNotFound})
+			if e.Code == constants.ErrCodeSessionNotFound {
+				return response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeSessionNotFound})
 			}
 		}
 	}
-	ctx.Locals(constants.LocalTransactionKey, transaction)
+	ctx.Locals(constants.LocalSessionKey, session)
 	return ctx.Next()
 }
 

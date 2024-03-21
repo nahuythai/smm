@@ -15,34 +15,52 @@ const (
 )
 
 const (
-	ErrCodeCategoryNotFound = "1000"
+	ErrCodeCategoryNotFound = "0100"
 )
 
 const (
-	ErrCodeUserNotFound                = "2000"
-	ErrCodeUserExist                   = "2001"
-	ErrCodeUserBanned                  = "2002"
-	ErrCodeUserInvalidEmail            = "2003"
-	ErrCodeUserAdminPermissionRequired = "2004"
+	ErrCodeUserNotFound                = "0200"
+	ErrCodeUserExist                   = "0201"
+	ErrCodeUserBanned                  = "0202"
+	ErrCodeUserInvalidEmail            = "0203"
+	ErrCodeUserAdminPermissionRequired = "0204"
+	ErrCodeUserNotEnoughBalance        = "0205"
 )
 
 const (
-	ErrCodeTransactionNotFound = "3000"
+	ErrCodeSessionNotFound = "0300"
 )
 
 const (
-	ErrCodeOtpNotFound = "4000"
-	ErrCodeOtpWrong    = "4001"
+	ErrCodeOtpNotFound = "0400"
+	ErrCodeOtpWrong    = "0401"
 )
 
 const (
-	ErrCodeTokenWrong = "5000"
+	ErrCodeTokenWrong = "0500"
 )
 
 const (
-	ErrCodeServiceNotFound = "6000"
+	ErrCodeServiceNotFound = "0600"
 )
 
 const (
-	ErrCodeProviderNotFound = "7000"
+	ErrCodeProviderNotFound = "0700"
+)
+
+const (
+	ErrCodeOrderNotFound        = "0800"
+	ErrCodeOrderQuantityInvalid = "0801"
+)
+
+const (
+	ErrBackgroundTaskExist = "0900"
+)
+
+const (
+	ErrCodeCustomRateNotFound = "1000"
+)
+
+const (
+	ErrCodeTransactionNotFound = "1100"
 )

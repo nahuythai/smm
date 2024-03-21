@@ -266,15 +266,15 @@ func (ctrl *controller) Login(ctx *fiber.Ctx) error {
 		return response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeAppUnauthorized})
 	}
 	if !user.EmailVerification {
-		transaction, err := queries.NewTransaction(ctx.Context()).CreateOne(models.Transaction{
-			ExpiredAt: time.Now().Add(cfg.VerifyEmailTransactionDuration),
+		session, err := queries.NewSession(ctx.Context()).CreateOne(models.Session{
+			ExpiredAt: time.Now().Add(cfg.VerifyEmailSessionDuration),
 			UserId:    user.Id,
-			Type:      constants.TransactionTypeVerifyEmail,
+			Type:      constants.SessionTypeVerifyEmail,
 		})
 		if err != nil {
 			return err
 		}
-		token, err := jwt.GetGlobal().GenerateToken(transaction.Id, constants.TokenTypeTransaction, cfg.VerifyEmailTransactionDuration)
+		token, err := jwt.GetGlobal().GenerateToken(session.Id, constants.TokenTypeSession, cfg.VerifyEmailSessionDuration)
 		if err != nil {
 			return err
 		}
@@ -283,25 +283,25 @@ func (ctrl *controller) Login(ctx *fiber.Ctx) error {
 		if err != nil {
 			logger.Error().Err(err).Caller().Str("func", "Login").Str("funcInline", "ctrl.s.CreateVerifyEmailTemplate").Msg("user-controller")
 		}
-		if err = mail.New().SendHTMLMail(user.Email, mailBody); err != nil {
+		if err = mail.GetGlobal().SendHTMLMail(user.Email, mailBody); err != nil {
 			logger.Error().Err(err).Caller().Str("func", "Login").Str("funcInline", "mail.New().SendHTMLMail").Msg("user-controller")
 		}
 		return response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeUserInvalidEmail})
 	}
 	if user.TwoFAEnable {
-		transaction, err := queries.NewTransaction(ctx.Context()).CreateOne(models.Transaction{
-			ExpiredAt: time.Now().Add(cfg.TransactionDuration),
+		session, err := queries.NewSession(ctx.Context()).CreateOne(models.Session{
+			ExpiredAt: time.Now().Add(cfg.SessionDuration),
 			UserId:    user.Id,
-			Type:      constants.TransactionTypeVerifyLogin,
+			Type:      constants.SessionTypeVerifyLogin,
 		})
 		if err != nil {
 			return err
 		}
-		token, err := jwt.GetGlobal().GenerateToken(transaction.Id, constants.TokenTypeTransaction, cfg.TransactionDuration)
+		token, err := jwt.GetGlobal().GenerateToken(session.Id, constants.TokenTypeSession, cfg.SessionDuration)
 		if err != nil {
 			return err
 		}
-		return response.New(ctx, response.Option{StatusCode: fiber.StatusOK, Data: fiber.Map{"token": token, "token_type": constants.TokenTypeTransaction}})
+		return response.New(ctx, response.Option{StatusCode: fiber.StatusOK, Data: fiber.Map{"token": token, "token_type": constants.TokenTypeSession}})
 	}
 	token, err := jwt.GetGlobal().GenerateToken(user.Id, constants.TokenTypeAccess, cfg.AccessTokenDuration)
 	if err != nil {
@@ -311,8 +311,8 @@ func (ctrl *controller) Login(ctx *fiber.Ctx) error {
 }
 
 func (ctrl *controller) VerifyLogin(ctx *fiber.Ctx) error {
-	transaction := ctx.Locals(constants.LocalTransactionKey).(*models.Transaction)
-	if transaction.Type != constants.TransactionTypeVerifyLogin {
+	session := ctx.Locals(constants.LocalSessionKey).(*models.Session)
+	if session.Type != constants.SessionTypeVerifyLogin {
 		return response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeTokenWrong, Data: "missing or wrong token"})
 	}
 	var requestBody serializers.UserLoginVerifyBodyValidate
@@ -322,17 +322,17 @@ func (ctrl *controller) VerifyLogin(ctx *fiber.Ctx) error {
 	if err := requestBody.Validate(); err != nil {
 		return err
 	}
-	otpCode, err := queries.NewOtp(ctx.Context()).GetByUserId(transaction.UserId)
+	otpCode, err := queries.NewOtp(ctx.Context()).GetByUserId(session.UserId)
 	if err != nil {
 		return err
 	}
 	if !otp.GetGlobal().Validate(requestBody.Code, otpCode.SecretKey) {
 		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgOtpWrong, Code: constants.ErrCodeOtpWrong})
 	}
-	if err := queries.NewTransaction(ctx.Context()).DeleteById(transaction.Id); err != nil {
+	if err := queries.NewSession(ctx.Context()).DeleteById(session.Id); err != nil {
 		return err
 	}
-	token, err := jwt.GetGlobal().GenerateToken(transaction.Id, constants.TokenTypeAccess, cfg.TransactionDuration)
+	token, err := jwt.GetGlobal().GenerateToken(session.Id, constants.TokenTypeAccess, cfg.SessionDuration)
 	if err != nil {
 		return err
 	}
@@ -390,16 +390,16 @@ func (ctrl *controller) Me(ctx *fiber.Ctx) error {
 
 func (ctrl *controller) VerifyEmail(ctx *fiber.Ctx) error {
 	ctx.Context().SetContentType(fiber.MIMETextHTML)
-	transaction, err := ctrl.s.transactionValidate(ctx.Context(), ctx.Query("token"), constants.TransactionTypeVerifyEmail)
+	session, err := ctrl.s.sessionValidate(ctx.Context(), ctx.Query("token"), constants.SessionTypeVerifyEmail)
 	if err != nil {
 		body, _ := ctrl.s.verifyEmailFailTemplate()
 		return ctx.SendString(body)
 	}
-	if err := queries.NewUser(ctx.Context()).UpdateEmailVerificationById(transaction.UserId, true); err != nil {
+	if err := queries.NewUser(ctx.Context()).UpdateEmailVerificationById(session.UserId, true); err != nil {
 		body, _ := ctrl.s.verifyEmailFailTemplate()
 		return ctx.SendString(body)
 	}
-	if err := queries.NewTransaction(ctx.Context()).DeleteById(transaction.Id); err != nil {
+	if err := queries.NewSession(ctx.Context()).DeleteById(session.Id); err != nil {
 		body, _ := ctrl.s.verifyEmailFailTemplate()
 		return ctx.SendString(body)
 	}

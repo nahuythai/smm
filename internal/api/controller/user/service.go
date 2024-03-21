@@ -20,7 +20,7 @@ type service struct {
 }
 
 type serviceInterface interface {
-	transactionValidate(ctx context.Context, transactionToken string, transactionType int) (*models.Transaction, error)
+	sessionValidate(ctx context.Context, sessionToken string, sessionType int) (*models.Session, error)
 	createVerifyEmailTemplate(username, token string) (string, error)
 	verifyEmailSuccessTemplate() (string, error)
 	verifyEmailFailTemplate() (string, error)
@@ -322,26 +322,26 @@ func (s *service) verifyEmailSuccessTemplate() (string, error) {
 	return emailVerificationSuccessTemplate, nil
 }
 
-func (s *service) transactionValidate(ctx context.Context, transactionToken string, transactionType int) (*models.Transaction, error) {
-	payload, err := jwt.GetGlobal().ValidateToken(transactionToken)
+func (s *service) sessionValidate(ctx context.Context, sessionToken string, sessionType int) (*models.Session, error) {
+	payload, err := jwt.GetGlobal().ValidateToken(sessionToken)
 	if err != nil {
-		logger.Error().Err(err).Caller().Str("func", "transactionValidate").Str("funcInline", "jwt.GetGlobal().ValidateToken").Msg("user-controller")
+		logger.Error().Err(err).Caller().Str("func", "sessionValidate").Str("funcInline", "jwt.GetGlobal().ValidateToken").Msg("user-controller")
 		return nil, response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeTokenWrong, Data: "missing or wrong token"})
 	}
-	if payload.Type != constants.TokenTypeTransaction {
+	if payload.Type != constants.TokenTypeSession {
 		return nil, response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeTokenWrong, Data: "missing or wrong token"})
 	}
 	id, _ := primitive.ObjectIDFromHex(payload.ID)
-	transaction, err := queries.NewTransaction(ctx).GetById(id)
+	session, err := queries.NewSession(ctx).GetById(id)
 	if err != nil {
 		if e, ok := err.(*response.Option); ok {
-			if e.Code == constants.ErrCodeTransactionNotFound {
-				return nil, response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeTransactionNotFound})
+			if e.Code == constants.ErrCodeSessionNotFound {
+				return nil, response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeSessionNotFound})
 			}
 		}
 	}
-	if transaction.Type != transactionType {
+	if session.Type != sessionType {
 		return nil, response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeTokenWrong, Data: "missing or wrong token"})
 	}
-	return transaction, nil
+	return session, nil
 }

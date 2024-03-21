@@ -27,6 +27,7 @@ type User interface {
 	UpdatePasswordById(id primitive.ObjectID, password string) error
 	CreateIndexes() error
 	UpdateEmailVerificationById(id primitive.ObjectID, verified bool) error
+	GetByIds(ids []primitive.ObjectID, opts ...QueryOption) ([]models.User, error)
 }
 type userQuery struct {
 	ctx        context.Context
@@ -205,4 +206,25 @@ func (q *userQuery) UpdateEmailVerificationById(id primitive.ObjectID, verified 
 		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
 	}
 	return nil
+}
+
+func (q *userQuery) GetByIds(ids []primitive.ObjectID, opts ...QueryOption) ([]models.User, error) {
+	opt := NewOption()
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	findOpts := options.FindOptions{
+		Projection: opt.QueryOnlyField(),
+	}
+	cursor, err := q.collection.Find(q.ctx, bson.M{"_id": bson.M{"$in": ids}}, &findOpts)
+	if err != nil {
+		logger.Error().Err(err).Caller().Str("func", "GetByIds").Str("funcInline", "q.collection.Find").Msg("userQuery")
+		return nil, err
+	}
+	var users []models.User
+	if err = cursor.All(q.ctx, &users); err != nil {
+		logger.Error().Err(err).Caller().Str("func", "GetByIds").Str("funcInline", "cursor.All").Msg("userQuery")
+		return nil, err
+	}
+	return users, nil
 }

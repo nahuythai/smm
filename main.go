@@ -6,6 +6,7 @@ import (
 	"smm/pkg/configure"
 	"smm/pkg/jwt"
 	"smm/pkg/logging"
+	"smm/pkg/mail"
 	"smm/pkg/otp"
 	"smm/pkg/response"
 	"smm/pkg/validator"
@@ -26,6 +27,12 @@ func main() {
 	validator.InitValidator()
 	jwt.New(cfg.SecretKey).InitGlobal()
 	otp.New().InitGlobal()
+	mail.New(mail.Option{
+		MailHost: cfg.MailHost,
+		MailPort: cfg.MailPort,
+		Email:    cfg.MailEmail,
+		Password: cfg.MailPassword,
+	}).InitGlobal()
 	app := fiber.New(fiber.Config{
 		JSONEncoder:  sonic.Marshal,
 		JSONDecoder:  sonic.Unmarshal,
@@ -55,4 +62,5 @@ func addRoute(app fiber.Router) {
 	routers.NewUser(router).V1()
 	routers.NewService(router).V1()
 	routers.NewProvider(router).V1()
+	routers.NewOrder(router).V1()
 }
