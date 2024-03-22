@@ -223,7 +223,18 @@ func (ctrl *controller) UpdateBalance(ctx *fiber.Ctx) error {
 		return err
 	}
 	userQuery := queries.NewUser(ctx.Context())
+	backgroundQuery := queries.NewBackground(ctx.Context())
+	task, err := backgroundQuery.CreateOne(models.Background{
+		Type:   constants.BackgroundTypeUpdateBalance,
+		UserId: requestBody.Id,
+	})
+	if err != nil {
+		return err
+	}
 	if err := userQuery.UpdateBalanceById(requestBody.Id, requestBody.Balance); err != nil {
+		return err
+	}
+	if err = backgroundQuery.DeleteById(task.Id); err != nil {
 		return err
 	}
 	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK})
@@ -279,13 +290,15 @@ func (ctrl *controller) Login(ctx *fiber.Ctx) error {
 			return err
 		}
 		// send mail
-		mailBody, err := ctrl.s.createVerifyEmailTemplate(requestBody.Username, token)
-		if err != nil {
-			logger.Error().Err(err).Caller().Str("func", "Login").Str("funcInline", "ctrl.s.CreateVerifyEmailTemplate").Msg("user-controller")
-		}
-		if err = mail.GetGlobal().SendHTMLMail(user.Email, mailBody); err != nil {
-			logger.Error().Err(err).Caller().Str("func", "Login").Str("funcInline", "mail.New().SendHTMLMail").Msg("user-controller")
-		}
+		go func() {
+			mailBody, err := ctrl.s.createVerifyEmailTemplate(requestBody.Username, token)
+			if err != nil {
+				logger.Error().Err(err).Caller().Str("func", "Login").Str("funcInline", "ctrl.s.CreateVerifyEmailTemplate").Msg("user-controller")
+			}
+			if err = mail.GetGlobal().SendHTMLMail(user.Email, mailBody); err != nil {
+				logger.Error().Err(err).Caller().Str("func", "Login").Str("funcInline", "mail.New().SendHTMLMail").Msg("user-controller")
+			}
+		}()
 		return response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeUserInvalidEmail})
 	}
 	if user.TwoFAEnable {

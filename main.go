@@ -63,4 +63,5 @@ func addRoute(app fiber.Router) {
 	routers.NewService(router).V1()
 	routers.NewProvider(router).V1()
 	routers.NewOrder(router).V1()
+	routers.NewPaymentMethod(router).V1()
 }

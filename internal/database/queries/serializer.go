@@ -59,3 +59,16 @@ type OrderUpdateByIdDoc struct {
 	Note         string    `bson:"note"`
 	Link         string    `bson:"link"`
 }
+
+type PaymentMethodUpdateByIdDoc struct {
+	UpdatedAt        time.Time `bson:"updated_at"`
+	Name             string    `bson:"name"`
+	Code             string    `bson:"code"`
+	Image            string    `bson:"image"`
+	MinAmount        int64     `bson:"min_amount"`
+	MaxAmount        int64     `bson:"max_amount"`
+	Status           int       `bson:"status"`
+	PercentageCharge float64   `bson:"percentage_charge"`
+	Description      string    `bson:"description"`
+	Auto             bool      `bson:"auto"`
+}

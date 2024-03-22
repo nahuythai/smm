@@ -64,3 +64,8 @@ const (
 const (
 	TransactionTypePlayOrder = iota
 )
+
+const (
+	PaymentMethodStatusOn = iota
+	PaymentMethodStatusOff
+)

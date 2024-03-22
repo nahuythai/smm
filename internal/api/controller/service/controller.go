@@ -105,7 +105,7 @@ func (ctrl *controller) List(ctx *fiber.Ctx) error {
 		res[i].Provider = providerIdNameMapping[service.ProviderId]
 	}
 	pagination.SetTotal(<-totalChan)
-	return response.NewPaginationResponse(ctx, response.PaginationResponse{StatusCode: fiber.StatusCreated, Data: res, Extras: *pagination})
+	return response.NewPaginationResponse(ctx, response.PaginationResponse{StatusCode: fiber.StatusOK, Data: res, Extras: *pagination})
 }
 
 func (ctrl *controller) Update(ctx *fiber.Ctx) error {
