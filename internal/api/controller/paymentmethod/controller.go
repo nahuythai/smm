@@ -44,6 +44,7 @@ func (ctrl *controller) Create(ctx *fiber.Ctx) error {
 		PercentageCharge: requestBody.PercentageCharge,
 		Description:      requestBody.Description,
 		Auto:             *requestBody.Auto,
+		Extras:           requestBody.Extras,
 	})
 	if err != nil {
 		return err
@@ -115,6 +116,7 @@ func (ctrl *controller) Update(ctx *fiber.Ctx) error {
 		Status:           requestBody.Status,
 		Description:      requestBody.Description,
 		Auto:             *requestBody.Auto,
+		Extras:           requestBody.Extras,
 	}); err != nil {
 		return err
 	}
@@ -130,7 +132,7 @@ func (ctrl *controller) Get(ctx *fiber.Ctx) error {
 	paymentMethodQuery := queries.NewPaymentMethod(ctx.Context())
 	queryOption := queries.NewOption()
 	queryOption.SetOnlyField("_id", "name", "code", "min_amount", "max_amount", "auto",
-		"percentage_charge", "description", "status", "image", "fixed_charge", "convention_rate")
+		"percentage_charge", "description", "status", "image", "fixed_charge", "convention_rate", "extras")
 	paymentMethod, err := paymentMethodQuery.GetById(paymentMethodId, queryOption)
 	if err != nil {
 		return err
@@ -148,6 +150,7 @@ func (ctrl *controller) Get(ctx *fiber.Ctx) error {
 		Auto:             paymentMethod.Auto,
 		Status:           paymentMethod.Status,
 		Id:               paymentMethod.Id,
+		Extras:           paymentMethod.Extras,
 	}})
 }
 

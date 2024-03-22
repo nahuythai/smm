@@ -11,6 +11,7 @@ type Session struct {
 	CreatedAt time.Time          `bson:"created_at"`
 	ExpiredAt time.Time          `bson:"expired_at"`
 	Type      int                `bson:"type"`
+	Data      interface{}        `bson:"data"`
 	UserId    primitive.ObjectID `bson:"user_id"`
 	Id        primitive.ObjectID `bson:"_id,omitempty"`
 }

@@ -34,6 +34,7 @@ const (
 const (
 	SessionTypeVerifyLogin = iota
 	SessionTypeVerifyEmail
+	SessionTypeQRTopUpPayment
 )
 
 const (
@@ -68,4 +69,10 @@ const (
 const (
 	PaymentMethodStatusOn = iota
 	PaymentMethodStatusOff
+)
+
+const (
+	PaymentStatusPending = iota
+	PaymentStatusCompleted
+	PaymentStatusCancelled
 )

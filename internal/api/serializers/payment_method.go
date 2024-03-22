@@ -11,16 +11,17 @@ import (
 )
 
 type PaymentMethodCreateBodyValidate struct {
-	Name             string  `json:"name" validate:"required"`
-	Code             string  `json:"code" validate:"required"`
-	Image            string  `json:"image" validate:"omitempty"`
-	MinAmount        int64   `json:"min_amount" validate:"required,min=1"`
-	MaxAmount        int64   `json:"max_amount" validate:"required,min=1"`
-	PercentageCharge float64 `json:"percentage_charge" validate:"omitempty,min=0"`
-	FixedCharge      float64 `json:"fixed_charge" validate:"omitempty,min=0"`
-	ConventionRate   float64 `json:"convention_rate" validate:"omitempty,min=0"`
-	Description      string  `json:"description" validate:"omitempty"`
-	Auto             *bool   `json:"auto" validate:"required"`
+	Name             string                 `json:"name" validate:"required"`
+	Code             string                 `json:"code" validate:"required"`
+	Image            string                 `json:"image" validate:"omitempty"`
+	MinAmount        int64                  `json:"min_amount" validate:"required,min=1"`
+	MaxAmount        int64                  `json:"max_amount" validate:"required,min=1"`
+	PercentageCharge float64                `json:"percentage_charge" validate:"omitempty,min=0"`
+	FixedCharge      float64                `json:"fixed_charge" validate:"omitempty,min=0"`
+	ConventionRate   float64                `json:"convention_rate" validate:"omitempty,min=0"`
+	Description      string                 `json:"description" validate:"omitempty"`
+	Auto             *bool                  `json:"auto" validate:"required"`
+	Extras           map[string]interface{} `json:"extras" validate:"required"`
 }
 
 func (v *PaymentMethodCreateBodyValidate) Validate() error {
@@ -77,18 +78,19 @@ type PaymentMethodListResponse struct {
 }
 
 type PaymentMethodUpdateBodyValidate struct {
-	Id               primitive.ObjectID `json:"id" validate:"required"`
-	Name             string             `json:"name" validate:"required"`
-	Code             string             `json:"code" validate:"required"`
-	Image            string             `json:"image" validate:"omitempty"`
-	MinAmount        int64              `json:"min_amount" validate:"required,min=1"`
-	MaxAmount        int64              `json:"max_amount" validate:"required,min=1"`
-	Status           int                `json:"status" validate:"omitempty,oneof=0 1"`
-	PercentageCharge float64            `json:"percentage_charge" validate:"omitempty,min=0"`
-	FixedCharge      float64            `json:"fixed_charge" validate:"omitempty,min=0"`
-	ConventionRate   float64            `json:"convention_rate" validate:"omitempty,min=0"`
-	Description      string             `json:"description" validate:"omitempty"`
-	Auto             *bool              `json:"auto" validate:"required"`
+	Id               primitive.ObjectID     `json:"id" validate:"required"`
+	Name             string                 `json:"name" validate:"required"`
+	Code             string                 `json:"code" validate:"required"`
+	Image            string                 `json:"image" validate:"omitempty"`
+	MinAmount        int64                  `json:"min_amount" validate:"required,min=1"`
+	MaxAmount        int64                  `json:"max_amount" validate:"required,min=1"`
+	Status           int                    `json:"status" validate:"omitempty,oneof=0 1"`
+	PercentageCharge float64                `json:"percentage_charge" validate:"omitempty,min=0"`
+	FixedCharge      float64                `json:"fixed_charge" validate:"omitempty,min=0"`
+	ConventionRate   float64                `json:"convention_rate" validate:"omitempty,min=0"`
+	Description      string                 `json:"description" validate:"omitempty"`
+	Auto             *bool                  `json:"auto" validate:"required"`
+	Extras           map[string]interface{} `json:"extras" validate:"omitempty"`
 }
 
 func (v *PaymentMethodUpdateBodyValidate) Validate() error {
@@ -96,16 +98,17 @@ func (v *PaymentMethodUpdateBodyValidate) Validate() error {
 }
 
 type PaymentMethodGetResponse struct {
-	Name             string             `json:"name"`
-	Code             string             `json:"code"`
-	Image            string             `json:"image"`
-	MinAmount        int64              `json:"min_amount"`
-	MaxAmount        int64              `json:"max_amount"`
-	PercentageCharge float64            `json:"percentage_charge"`
-	FixedCharge      float64            `json:"fixed_charge"`
-	ConventionRate   float64            `json:"convention_rate"`
-	Description      string             `json:"description"`
-	Status           int                `json:"status"`
-	Auto             bool               `json:"auto"`
-	Id               primitive.ObjectID `json:"id"`
+	Name             string                 `json:"name"`
+	Code             string                 `json:"code"`
+	Image            string                 `json:"image"`
+	MinAmount        int64                  `json:"min_amount"`
+	MaxAmount        int64                  `json:"max_amount"`
+	PercentageCharge float64                `json:"percentage_charge"`
+	FixedCharge      float64                `json:"fixed_charge"`
+	ConventionRate   float64                `json:"convention_rate"`
+	Description      string                 `json:"description"`
+	Status           int                    `json:"status"`
+	Auto             bool                   `json:"auto"`
+	Extras           map[string]interface{} `json:"extras"`
+	Id               primitive.ObjectID     `json:"id"`
 }

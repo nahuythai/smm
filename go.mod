@@ -13,6 +13,7 @@ require (
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/pquerna/otp v1.4.0
 	github.com/rs/zerolog v1.32.0
+	github.com/samber/lo v1.39.0
 	go.mongodb.org/mongo-driver v1.14.0
 	golang.org/x/crypto v0.19.0
 )
@@ -36,7 +37,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	github.com/samber/lo v1.39.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.51.0 // indirect

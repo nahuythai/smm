@@ -12,9 +12,10 @@ type Payment struct {
 	Amount        float64            `bson:"amount"`
 	Status        int                `bson:"status"`
 	Feedback      string             `bson:"feedback"`
+	TransactionId string             `bson:"trx_id"`
 	UserId        primitive.ObjectID `bson:"user_id"`
 	PaymentMethod primitive.ObjectID `bson:"payment_method"`
 	Id            primitive.ObjectID `bson:"_id,omitempty"`
 }
 
-const PaymentCollectionName = "payment_methods"
+const PaymentCollectionName = "payments"

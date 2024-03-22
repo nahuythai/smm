@@ -43,7 +43,7 @@ func (v *OrderListBodyValidate) Sort() map[string]int {
 type OrderListFilter struct {
 	Value  interface{} `json:"value" validate:"required"`
 	Method string      `json:"method" validate:"required,oneof=$eq"`
-	Field  string      `json:"field" validate:"required,oneof=status"`
+	Field  string      `json:"field" validate:"required,oneof=status user_id"`
 }
 
 func (v *OrderListBodyValidate) GetFilter() bson.M {

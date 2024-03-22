@@ -68,3 +68,7 @@ const (
 const (
 	ErrCodePaymentMethodNotFound = "1200"
 )
+
+const (
+	ErrCodePaymentNotFound = "1300"
+)

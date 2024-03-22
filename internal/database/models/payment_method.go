@@ -20,6 +20,7 @@ type PaymentMethod struct {
 	Description      string             `bson:"description"`
 	Status           int                `bson:"status"`
 	Auto             bool               `bson:"auto"`
+	Extras map[string]interface{} `bson:"extras"`
 	Id               primitive.ObjectID `bson:"_id,omitempty"`
 }
 
