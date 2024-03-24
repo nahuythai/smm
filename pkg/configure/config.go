@@ -28,11 +28,14 @@ type Config struct {
 	BackgroundTaskDuration     time.Duration `env:"BACKGROUND_TASK_DURATION" envDefault:"1m"`
 	MongoDBUrl                 string        `env:"MONGODB_URL" envDefault:"mongodb://localhost:27017"`
 	MongoDBName                string        `env:"MONGODB_NAME" envDefault:"db_smm"`
+	Web2MAccessToken           string        `env:"WEB2M_ACCESS_TOKEN" envDefault:"!change_me!"`
 }
 
 func GetConfig() *Config {
 	if cfg == nil {
-		_ = godotenv.Load()
+		if err := godotenv.Load(); err != nil {
+			log.Fatal("Fail to load env!", err)
+		}
 		cfg = &Config{}
 		if err := env.Parse(cfg); err != nil {
 			log.Fatal("Fail to load env! ", err)

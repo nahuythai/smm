@@ -12,15 +12,16 @@ type PaymentMethod struct {
 	Name             string             `bson:"name"`
 	Code             string             `bson:"code"`
 	Image            string             `bson:"image"`
-	MinAmount        int64              `bson:"min_amount"`
-	MaxAmount        int64              `bson:"max_amount"`
+	MinAmount        float64            `bson:"min_amount"`
+	MaxAmount        float64            `bson:"max_amount"`
 	PercentageCharge float64            `bson:"percentage_charge"`
 	FixedCharge      float64            `bson:"fixed_charge"`
 	ConventionRate   float64            `bson:"convention_rate"`
 	Description      string             `bson:"description"`
 	Status           int                `bson:"status"`
 	Auto             bool               `bson:"auto"`
-	Extras map[string]interface{} `bson:"extras"`
+	AccountName      string             `bson:"account_name"`
+	AccountNumber    string             `bson:"account_number"`
 	Id               primitive.ObjectID `bson:"_id,omitempty"`
 }
 

@@ -4,6 +4,7 @@ import (
 	"smm/pkg/logging"
 
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var (
@@ -12,6 +13,7 @@ var (
 
 type Provider interface {
 	AddOrder(request AddOrderRequest) (*AddOrderResponse, error)
+	MultipleOrderStatus(request MultipleOrderStatusRequest) ([]MultipleOrderStatusOrderResponse, error)
 }
 type provider struct {
 	apiKey      string
@@ -37,6 +39,21 @@ type AddOrderRequest struct {
 	Quantity     int64  `json:"quantity"`
 }
 
+type MultipleOrderStatusRequest struct {
+	Orders string `json:"orders"`
+}
+
+type MultipleOrderStatusOrderResponse struct {
+	Quantity     int64              `json:"quantity"`
+	Status       string             `json:"status"`
+	StartCounter int64              `json:"start_counter"`
+	Remains      int64              `json:"remains"`
+	Currency     string             `json:"currency"`
+	Charge       *string            `json:"charge"`
+	Order        primitive.ObjectID `json:"order"`
+	Error        string             `json:"error"`
+}
+
 func (p *provider) AddOrder(request AddOrderRequest) (*AddOrderResponse, error) {
 	var res AddOrderResponse
 	code, body, errs := fiber.AcquireClient().Post(p.providerUrl).JSON(fiber.Map{
@@ -52,4 +69,19 @@ func (p *provider) AddOrder(request AddOrderRequest) (*AddOrderResponse, error) 
 		return nil, errs[0]
 	}
 	return &res, nil
+}
+
+func (p *provider) MultipleOrderStatus(request MultipleOrderStatusRequest) ([]MultipleOrderStatusOrderResponse, error) {
+	var res []MultipleOrderStatusOrderResponse
+	code, body, errs := fiber.AcquireClient().Post(p.providerUrl).JSON(fiber.Map{
+		"key":    p.apiKey,
+		"action": "orders",
+		"orders": request.Orders,
+	}).Struct(&res)
+	logger.Debug().Caller().Str("func", "MultipleOrderStatus").Str("funcInline", "fiber.AcquireClient").Int("code", code).Bytes("body", body).Msg("provider-api")
+	if len(errs) > 0 {
+		logger.Error().Errs("errs", errs).Caller().Str("func", "MultipleOrderStatus").Str("funcInline", "fiber.AcquireClient").Msg("provider-api")
+		return nil, errs[0]
+	}
+	return res, nil
 }

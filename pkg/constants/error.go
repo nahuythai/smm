@@ -70,5 +70,6 @@ const (
 )
 
 const (
-	ErrCodePaymentNotFound = "1300"
+	ErrCodePaymentNotFound      = "1300"
+	ErrCodePaymentAmountInvalid = "1301"
 )

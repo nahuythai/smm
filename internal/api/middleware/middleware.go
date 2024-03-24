@@ -17,6 +17,10 @@ var (
 	logger = logging.GetLogger()
 )
 
+type ThirdPartyAuthBody struct {
+	Key string `json:"key"`
+}
+
 func SessionAuth(ctx *fiber.Ctx) error {
 	token := ctx.Get("Authorization")
 	token, _ = strings.CutPrefix(token, "Bearer ")
@@ -66,6 +70,7 @@ func UserAuth(ctx *fiber.Ctx) error {
 				return response.NewError(fiber.StatusUnauthorized, response.Option{Code: constants.ErrCodeUserNotFound})
 			}
 		}
+		return err
 	}
 	if user.Status == constants.UserStatusBanned {
 		return response.NewError(fiber.StatusForbidden, response.Option{Code: constants.ErrCodeUserBanned})
@@ -79,5 +84,30 @@ func AdminPermission(ctx *fiber.Ctx) error {
 	if user.Role != constants.UserRoleAdmin {
 		return response.NewError(fiber.StatusForbidden, response.Option{Code: constants.ErrCodeUserAdminPermissionRequired})
 	}
+	return ctx.Next()
+}
+
+func ThirdPartyAuth(ctx *fiber.Ctx) error {
+	var body ThirdPartyAuthBody
+	if err := ctx.BodyParser(&body); err != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": "body wrong format"})
+	}
+	if body.Key == "" {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": "missing key"})
+	}
+	userQuery := queries.NewUser(ctx.Context())
+	queryOption := queries.NewOption()
+	queryOption.SetOnlyField(
+		"updated_at", "created_at", "last_active", "first_name", "last_name", "username",
+		"phone_number", "language", "status", "balance", "email", "email_verification",
+		"2fa_enable", "address", "avatar", "api_key", "_id", "role")
+	user, err := userQuery.GetByApiKey(body.Key, queryOption)
+	if err != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": "key invalid"})
+	}
+	if user.Status == constants.UserStatusBanned {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": "user banned"})
+	}
+	ctx.Locals(constants.LocalUserKey, user)
 	return ctx.Next()
 }

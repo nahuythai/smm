@@ -22,6 +22,8 @@ type Order interface {
 	UpdateById(id primitive.ObjectID, doc OrderUpdateByIdDoc) error
 	GetById(id primitive.ObjectID, opts ...QueryOption) (order *models.Order, err error)
 	DeleteById(id primitive.ObjectID) error
+	GetByIdsAndUserId(ids []primitive.ObjectID, userId primitive.ObjectID, opts ...QueryOption) ([]models.Order, error)
+	GetByIdAndUserId(id primitive.ObjectID, userId primitive.ObjectID, opts ...QueryOption) (*models.Order, error)
 }
 type orderQuery struct {
 	ctx        context.Context
@@ -124,4 +126,44 @@ func (q *orderQuery) DeleteById(id primitive.ObjectID) error {
 		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
 	}
 	return nil
+}
+
+func (q *orderQuery) GetByIdsAndUserId(ids []primitive.ObjectID, userId primitive.ObjectID, opts ...QueryOption) ([]models.Order, error) {
+	opt := NewOption()
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	findOpts := options.FindOptions{
+		Projection: opt.QueryOnlyField(),
+	}
+	cursor, err := q.collection.Find(q.ctx, bson.M{"_id": bson.M{"$in": ids}, "user_id": userId}, &findOpts)
+	if err != nil {
+		logger.Error().Err(err).Caller().Str("func", "GetByIdsAndUserId").Str("funcInline", "q.collection.Find").Msg("orderQuery")
+		return nil, err
+	}
+	var orders []models.Order
+	if err = cursor.All(q.ctx, &orders); err != nil {
+		logger.Error().Err(err).Caller().Str("func", "GetByIdsAndUserId").Str("funcInline", "cursor.All").Msg("orderQuery")
+		return nil, err
+	}
+	return orders, nil
+}
+
+func (q *orderQuery) GetByIdAndUserId(id primitive.ObjectID, userId primitive.ObjectID, opts ...QueryOption) (*models.Order, error) {
+	var order models.Order
+	opt := NewOption()
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	findOpt := options.FindOneOptions{
+		Projection: opt.QueryOnlyField(),
+	}
+	if err := q.collection.FindOne(q.ctx, bson.M{"_id": id, "user_id": userId}, &findOpt).Decode(&order); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
+		}
+		logger.Error().Err(err).Caller().Str("func", "GetByIdAndUserId").Str("funcInline", "q.collection.FindOne").Msg("orderQuery")
+		return nil, err
+	}
+	return &order, nil
 }

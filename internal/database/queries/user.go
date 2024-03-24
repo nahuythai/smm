@@ -28,6 +28,7 @@ type User interface {
 	CreateIndexes() error
 	UpdateEmailVerificationById(id primitive.ObjectID, verified bool) error
 	GetByIds(ids []primitive.ObjectID, opts ...QueryOption) ([]models.User, error)
+	GetByApiKey(apiKey string, opts ...QueryOption) (*models.User, error)
 }
 type userQuery struct {
 	ctx        context.Context
@@ -117,7 +118,24 @@ func (q *userQuery) UpdateById(id primitive.ObjectID, doc UserUpdateByIdDoc) err
 	}
 	return nil
 }
-
+func (q *userQuery) GetByApiKey(apiKey string, opts ...QueryOption) (*models.User, error) {
+	var user models.User
+	opt := NewOption()
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	findOpt := options.FindOneOptions{
+		Projection: opt.QueryOnlyField(),
+	}
+	if err := q.collection.FindOne(q.ctx, bson.M{"api_key": apiKey}, &findOpt).Decode(&user); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeUserNotFound, Data: constants.ErrMsgResourceNotFound})
+		}
+		logger.Error().Err(err).Caller().Str("func", "GetByApiKey").Str("funcInline", "q.collection.FindOne").Msg("userQuery")
+		return nil, err
+	}
+	return &user, nil
+}
 func (q *userQuery) GetById(id primitive.ObjectID, opts ...QueryOption) (*models.User, error) {
 	var user models.User
 	opt := NewOption()

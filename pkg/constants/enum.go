@@ -48,17 +48,6 @@ const (
 )
 
 const (
-	OrderStatusAwaiting = iota
-	OrderStatusPending
-	OrderStatusProcessing
-	OrderStatusInProgress
-	OrderStatusCompleted
-	OrderStatusPartial
-	OrderStatusCanceled
-	OrderStatusRefunded
-)
-
-const (
 	BackgroundTypeUpdateBalance = iota
 )
 
@@ -76,3 +65,33 @@ const (
 	PaymentStatusCompleted
 	PaymentStatusCancelled
 )
+
+const (
+	ThirdPartyActionOrderCreate         = "add"
+	ThirdPartyActionOrderStatus         = "status"
+	ThirdPartyActionOrderMultipleStatus = "orders"
+	ThirdPartyActionServiceList         = "services"
+	ThirdPartyActionUserBalance         = "balance"
+)
+
+const (
+	OrderStatusAwaiting = iota
+	OrderStatusPending
+	OrderStatusProcessing
+	OrderStatusInProgress
+	OrderStatusCompleted
+	OrderStatusPartial
+	OrderStatusCanceled
+	OrderStatusRefunded
+)
+
+var OrderStatusTextMapping = map[int]string{
+	OrderStatusAwaiting:   "Awaiting",
+	OrderStatusPending:    "Pending",
+	OrderStatusProcessing: "Processing",
+	OrderStatusInProgress: "InProgress",
+	OrderStatusCompleted:  "Completed",
+	OrderStatusPartial:    "Partial",
+	OrderStatusCanceled:   "Canceled",
+	OrderStatusRefunded:   "Refunded",
+}

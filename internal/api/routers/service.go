@@ -25,6 +25,7 @@ func NewService(router fiber.Router) Service {
 
 func (r *service) V1() {
 	r.Admin()
+	r.User()
 }
 
 func (r *service) Admin() {
@@ -35,4 +36,10 @@ func (r *service) Admin() {
 	router.Put("/", r.ctrl.Update)
 	router.Get("/:id", r.ctrl.Get)
 	router.Delete("/:id", r.ctrl.Delete)
+}
+
+func (r *service) User() {
+	router := r.router.Group("/services")
+	router.Use(middleware.UserAuth)
+	router.Post("/list", r.ctrl.List)
 }

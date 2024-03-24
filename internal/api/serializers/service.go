@@ -67,10 +67,14 @@ func (v *ServiceListBodyValidate) GetFilter() bson.M {
 }
 
 type ServiceListResponse struct {
-	Title    string             `json:"title"`
-	Status   int                `json:"status"`
-	Provider string             `json:"provider"`
-	Id       primitive.ObjectID `json:"id"`
+	Title       string             `json:"title"`
+	Status      int                `json:"status"`
+	Provider    string             `json:"provider"`
+	MinAmount   int64              `json:"min_amount"`
+	MaxAmount   int64              `json:"max_amount"`
+	Rate        float64            `json:"rate"`
+	Description string             `json:"description"`
+	Id          primitive.ObjectID `json:"id"`
 }
 
 type ServiceUpdateBodyValidate struct {
@@ -101,4 +105,56 @@ type ServiceGetResponse struct {
 	ProviderServiceId string             `json:"provider_service_id"`
 	Provider          string             `json:"provider"`
 	Category          string             `json:"category"`
+}
+
+type ServiceUserListBodyValidate struct {
+	Page     int64                   `json:"page" validate:"omitempty"`
+	Limit    int64                   `json:"limit" validate:"omitempty"`
+	SortType int                     `json:"sort_type" validate:"omitempty,oneof=-1 1 0"`
+	SortBy   string                  `json:"sort_by" validate:"omitempty"`
+	Search   string                  `json:"search" validate:"omitempty"`
+	Filters  []ServiceUserListFilter `json:"filters" validate:"omitempty,dive"`
+}
+
+func (v *ServiceUserListBodyValidate) Validate() error {
+	return validator.Validate(v)
+}
+
+func (v *ServiceUserListBodyValidate) Sort() map[string]int {
+	sortBy := "updated_at"
+	if v.SortBy != "" {
+		sortBy = v.SortBy
+	}
+	return map[string]int{sortBy: v.SortType}
+}
+
+type ServiceUserListFilter struct {
+	Value  interface{} `json:"value" validate:"required"`
+	Method string      `json:"method" validate:"required,oneof=$eq $regex"`
+	Field  string      `json:"field" validate:"required,oneof=title category_id provider_id"`
+}
+
+func (v *ServiceUserListBodyValidate) GetFilter() bson.M {
+	filters := make([]queries.Filter, 0, len(v.Filters))
+	for _, filter := range v.Filters {
+		filters = append(filters, queries.Filter(filter))
+	}
+	filterOption := queries.NewFilterOption()
+	filterOption.AddFilter(filters...)
+	query := filterOption.BuildAndQuery()
+	if v.Search != "" {
+		query["$or"] = []bson.M{{"title": bson.M{queries.QueryFilterMethodRegex: primitive.Regex{Pattern: regexp.QuoteMeta(fmt.Sprintf("%v", v.Search)), Options: "i"}}}}
+	}
+	return query
+}
+
+type ServiceUserListResponse struct {
+	Title       string             `json:"title"`
+	Status      int                `json:"status"`
+	Provider    string             `json:"provider"`
+	MinAmount   int64              `json:"min_amount"`
+	MaxAmount   int64              `json:"max_amount"`
+	Rate        float64            `json:"rate"`
+	Description string             `json:"description"`
+	Id          primitive.ObjectID `json:"id"`
 }

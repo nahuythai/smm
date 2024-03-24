@@ -25,6 +25,7 @@ func NewCategory(router fiber.Router) Category {
 
 func (r *category) V1() {
 	r.Admin()
+	r.User()
 }
 
 func (r *category) Admin() {
@@ -35,4 +36,10 @@ func (r *category) Admin() {
 	router.Put("/", r.ctrl.Update)
 	router.Get("/:id", r.ctrl.Get)
 	router.Delete("/:id", r.ctrl.Delete)
+}
+
+func (r *category) User() {
+	router := r.router.Group("/categories")
+	router.Use(middleware.UserAuth)
+	router.Post("/list", r.ctrl.UserList)
 }

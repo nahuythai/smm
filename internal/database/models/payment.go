@@ -14,7 +14,7 @@ type Payment struct {
 	Feedback      string             `bson:"feedback"`
 	TransactionId string             `bson:"trx_id"`
 	UserId        primitive.ObjectID `bson:"user_id"`
-	PaymentMethod primitive.ObjectID `bson:"payment_method"`
+	Method        primitive.ObjectID `bson:"method"`
 	Id            primitive.ObjectID `bson:"_id,omitempty"`
 }
 

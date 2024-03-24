@@ -2,6 +2,7 @@ package main
 
 import (
 	"smm/internal/api/routers"
+	"smm/internal/cron"
 	"smm/internal/database"
 	"smm/pkg/configure"
 	"smm/pkg/jwt"
@@ -33,6 +34,9 @@ func main() {
 		Email:    cfg.MailEmail,
 		Password: cfg.MailPassword,
 	}).InitGlobal()
+
+	cron.Run()
+
 	app := fiber.New(fiber.Config{
 		JSONEncoder:  sonic.Marshal,
 		JSONDecoder:  sonic.Unmarshal,
@@ -64,4 +68,6 @@ func addRoute(app fiber.Router) {
 	routers.NewProvider(router).V1()
 	routers.NewOrder(router).V1()
 	routers.NewPaymentMethod(router).V1()
+	routers.NewPayment(router).V1()
+	routers.NewThirdParty(router).V1()
 }

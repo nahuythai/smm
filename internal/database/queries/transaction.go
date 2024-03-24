@@ -2,7 +2,6 @@ package queries
 
 import (
 	"context"
-	"github.com/gofiber/fiber/v2/utils"
 	"smm/internal/database"
 	"smm/internal/database/models"
 	"smm/pkg/constants"
@@ -39,7 +38,9 @@ func (q *transactionQuery) CreateOne(transaction models.Transaction) (*models.Tr
 	now := time.Now()
 	transaction.UpdatedAt = now
 	transaction.CreatedAt = now
-	transaction.TransactionId = utils.UUID()
+	if transaction.TransactionId == "" {
+		transaction.TransactionId = transaction.GenerateTransactionId()
+	}
 	result, err := q.collection.InsertOne(q.ctx, transaction)
 	if err != nil {
 		logger.Error().Err(err).Caller().Str("func", "CreateOne").Str("funcInline", "q.collection.InsertOne").Msg("transactionQuery")

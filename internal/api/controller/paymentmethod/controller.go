@@ -44,7 +44,8 @@ func (ctrl *controller) Create(ctx *fiber.Ctx) error {
 		PercentageCharge: requestBody.PercentageCharge,
 		Description:      requestBody.Description,
 		Auto:             *requestBody.Auto,
-		Extras:           requestBody.Extras,
+		AccountName:      requestBody.AccountName,
+		AccountNumber:    requestBody.AccountNumber,
 	})
 	if err != nil {
 		return err
@@ -116,7 +117,8 @@ func (ctrl *controller) Update(ctx *fiber.Ctx) error {
 		Status:           requestBody.Status,
 		Description:      requestBody.Description,
 		Auto:             *requestBody.Auto,
-		Extras:           requestBody.Extras,
+		AccountName:      requestBody.AccountName,
+		AccountNumber:    requestBody.AccountNumber,
 	}); err != nil {
 		return err
 	}
@@ -132,7 +134,8 @@ func (ctrl *controller) Get(ctx *fiber.Ctx) error {
 	paymentMethodQuery := queries.NewPaymentMethod(ctx.Context())
 	queryOption := queries.NewOption()
 	queryOption.SetOnlyField("_id", "name", "code", "min_amount", "max_amount", "auto",
-		"percentage_charge", "description", "status", "image", "fixed_charge", "convention_rate", "extras")
+		"percentage_charge", "description", "status", "image",
+		"fixed_charge", "convention_rate", "account_name", "account_number")
 	paymentMethod, err := paymentMethodQuery.GetById(paymentMethodId, queryOption)
 	if err != nil {
 		return err
@@ -150,7 +153,8 @@ func (ctrl *controller) Get(ctx *fiber.Ctx) error {
 		Auto:             paymentMethod.Auto,
 		Status:           paymentMethod.Status,
 		Id:               paymentMethod.Id,
-		Extras:           paymentMethod.Extras,
+		AccountName:      paymentMethod.AccountName,
+		AccountNumber:    paymentMethod.AccountNumber,
 	}})
 }
 

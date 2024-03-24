@@ -1,6 +1,9 @@
 package models
 
 import (
+	"crypto/rand"
+	"math/big"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -17,3 +20,20 @@ type Transaction struct {
 }
 
 const TransactionCollectionName = "transactions"
+
+func (t *Transaction) GenerateTransactionId() string {
+	length := 10
+	charSet := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	randomString := make([]byte, length)
+	maxIndex := big.NewInt(int64(len(charSet)))
+
+	for i := 0; i < length; i++ {
+		randomIndex, err := rand.Int(rand.Reader, maxIndex)
+		if err != nil {
+			return "----------"
+		}
+		randomString[i] = charSet[randomIndex.Int64()]
+	}
+
+	return strings.ToUpper(string(randomString))
+}
