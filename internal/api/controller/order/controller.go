@@ -1,6 +1,7 @@
 package order
 
 import (
+	"context"
 	"fmt"
 	"smm/internal/api/serializers"
 	"smm/internal/database/models"
@@ -101,6 +102,7 @@ func (ctrl *controller) Create(ctx *fiber.Ctx) error {
 		ServiceId:  requestBody.ServiceId,
 		Price:      price,
 		CategoryId: service.CategoryId,
+		ProviderId: service.ProviderId,
 	}
 
 	orderQuery := queries.NewOrder(ctx.Context())
@@ -118,9 +120,15 @@ func (ctrl *controller) Create(ctx *fiber.Ctx) error {
 	go func() {
 		res, _ := providerapi.New(provider.Url, provider.ApiKey).AddOrder(providerapi.AddOrderRequest{
 			ApiServiceId: service.ProviderServiceId,
+			Link:         requestBody.Link,
+			Quantity:     requestBody.Quantity,
 		})
 		if res != nil {
-			_ = queries.NewProvider(ctx.Context()).UpdateProviderOrderIdAndProviderResponseById(provider.Id, res.OrderId, fmt.Sprintf("Order: %d", res.OrderId))
+			if res.Error == "" {
+				_ = queries.NewOrder(context.Background()).UpdateProviderOrderIdAndProviderResponseById(newOrder.Id, res.OrderId, fmt.Sprintf("Order: %d", res.OrderId))
+			} else {
+				_ = queries.NewOrder(context.Background()).UpdateProviderOrderIdAndProviderResponseById(newOrder.Id, res.OrderId, fmt.Sprintf("Error: %s", res.Error))
+			}
 		}
 	}()
 	return response.New(ctx, response.Option{StatusCode: fiber.StatusCreated, Data: fiber.Map{"id": newOrder.Id}})

@@ -23,6 +23,7 @@ type Payment interface {
 	GetById(id primitive.ObjectID, opts ...QueryOption) (payment *models.Payment, err error)
 	DeleteById(id primitive.ObjectID) error
 	GetByIds(ids []primitive.ObjectID, opts ...QueryOption) ([]models.Payment, error)
+	BulkWrite(writes []mongo.WriteModel) error
 }
 type paymentQuery struct {
 	ctx        context.Context
@@ -146,4 +147,12 @@ func (q *paymentQuery) GetByIds(ids []primitive.ObjectID, opts ...QueryOption) (
 		return nil, err
 	}
 	return payments, nil
+}
+
+func (q *paymentQuery) BulkWrite(writes []mongo.WriteModel) error {
+	if _, err := q.collection.BulkWrite(q.ctx, writes); err != nil {
+		logger.Error().Err(err).Caller().Str("func", "BulkWrite").Str("funcInline", "q.collection.BulkWrite").Msg("paymentQuery")
+		return err
+	}
+	return nil
 }

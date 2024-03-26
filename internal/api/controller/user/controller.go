@@ -231,10 +231,23 @@ func (ctrl *controller) UpdateBalance(ctx *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	if err := userQuery.UpdateBalanceById(requestBody.Id, requestBody.Balance); err != nil {
+	queryOption := queries.NewOption()
+	queryOption.SetOnlyField("balance")
+	user, err := userQuery.GetById(requestBody.Id, queryOption)
+	if err != nil {
+		return err
+	}
+	if err := userQuery.UpdateBalanceById(requestBody.Id, requestBody.Amount+user.Balance); err != nil {
 		return err
 	}
 	if err = backgroundQuery.DeleteById(task.Id); err != nil {
+		return err
+	}
+	if _, err := queries.NewTransaction(ctx.Context()).CreateOne(models.Transaction{
+		UserId: requestBody.Id,
+		Amount: requestBody.Amount,
+		Type:   constants.TransactionTypeAddBalance,
+	}); err != nil {
 		return err
 	}
 	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK})

@@ -1,6 +1,7 @@
 package thirdparty
 
 import (
+	"context"
 	"fmt"
 	"smm/internal/api/serializers"
 	"smm/internal/database/models"
@@ -141,10 +142,14 @@ func (ctrl *controller) CreateOrder(ctx *fiber.Ctx) error {
 	go func() {
 		res, _ := providerapi.New(provider.Url, provider.ApiKey).AddOrder(providerapi.AddOrderRequest{
 			ApiServiceId: service.ProviderServiceId,
+			Link:         requestBody.Link,
+			Quantity:     requestBody.Quantity,
 		})
 		if res != nil {
-			if err = queries.NewProvider(ctx.Context()).UpdateProviderOrderIdAndProviderResponseById(provider.Id, res.OrderId, fmt.Sprintf("Order: %d", res.OrderId)); err != nil {
-				logger.Error().Err(err).Caller().Str("func", "CreateOrder").Str("funcInline", "queries.NewProvider(ctx.Context()).UpdateProviderOrderIdAndProviderResponseById").Msg("user-controller")
+			if res.Error == "" {
+				_ = queries.NewOrder(context.Background()).UpdateProviderOrderIdAndProviderResponseById(newOrder.Id, res.OrderId, fmt.Sprintf("Order: %d", res.OrderId))
+			} else {
+				_ = queries.NewOrder(context.Background()).UpdateProviderOrderIdAndProviderResponseById(newOrder.Id, res.OrderId, fmt.Sprintf("Error: %s", res.Error))
 			}
 		}
 	}()

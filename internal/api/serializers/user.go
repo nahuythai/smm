@@ -141,8 +141,8 @@ type UserGetResponse struct {
 }
 
 type UserUpdateBalanceBodyValidate struct {
-	Id      primitive.ObjectID `json:"id" validate:"required"`
-	Balance float64            `json:"balance" validate:"required,min=0"`
+	Id     primitive.ObjectID `json:"id" validate:"required"`
+	Amount float64            `json:"amount" validate:"required"`
 }
 
 func (v *UserUpdateBalanceBodyValidate) Validate() error {

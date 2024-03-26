@@ -21,6 +21,7 @@ type Order struct {
 	UserId                primitive.ObjectID `bson:"user_id"`
 	ServiceId             primitive.ObjectID `bson:"service_id"`
 	CategoryId            primitive.ObjectID `bson:"category_id"`
+	ProviderId            primitive.ObjectID `bson:"provider_id"`
 	Id                    primitive.ObjectID `bson:"_id,omitempty"`
 }
 

@@ -23,7 +23,6 @@ type Provider interface {
 	GetById(id primitive.ObjectID, opts ...QueryOption) (provider *models.Provider, err error)
 	DeleteById(id primitive.ObjectID) error
 	GetByIds(ids []primitive.ObjectID, opts ...QueryOption) ([]models.Provider, error)
-	UpdateProviderOrderIdAndProviderResponseById(id primitive.ObjectID, providerOrderId int64, providerResponse string) error
 	GetActiveById(id primitive.ObjectID, opts ...QueryOption) (*models.Provider, error)
 }
 type providerQuery struct {
@@ -148,20 +147,6 @@ func (q *providerQuery) GetByIds(ids []primitive.ObjectID, opts ...QueryOption) 
 		return nil, err
 	}
 	return providers, nil
-}
-
-func (q *providerQuery) UpdateProviderOrderIdAndProviderResponseById(id primitive.ObjectID, providerOrderId int64, providerResponse string) error {
-	result, err := q.collection.UpdateByID(q.ctx, id, bson.M{
-		"$set": bson.M{"provider_order_id": providerOrderId, "provider_response": providerResponse, "updated_at": time.Now()},
-	})
-	if err != nil {
-		logger.Error().Err(err).Caller().Str("func", "UpdateProviderOrderIdAndProviderResponseById").Str("funcInline", "q.collection.UpdateByID").Msg("providerQuery")
-		return err
-	}
-	if result.MatchedCount == 0 {
-		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeProviderNotFound, Data: constants.ErrMsgResourceNotFound})
-	}
-	return nil
 }
 
 func (q *providerQuery) GetActiveById(id primitive.ObjectID, opts ...QueryOption) (*models.Provider, error) {

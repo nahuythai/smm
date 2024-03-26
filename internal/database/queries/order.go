@@ -24,6 +24,8 @@ type Order interface {
 	DeleteById(id primitive.ObjectID) error
 	GetByIdsAndUserId(ids []primitive.ObjectID, userId primitive.ObjectID, opts ...QueryOption) ([]models.Order, error)
 	GetByIdAndUserId(id primitive.ObjectID, userId primitive.ObjectID, opts ...QueryOption) (*models.Order, error)
+	BulkWrite(writes []mongo.WriteModel) error
+	UpdateProviderOrderIdAndProviderResponseById(id primitive.ObjectID, providerOrderId int64, providerResponse string) error
 }
 type orderQuery struct {
 	ctx        context.Context
@@ -166,4 +168,26 @@ func (q *orderQuery) GetByIdAndUserId(id primitive.ObjectID, userId primitive.Ob
 		return nil, err
 	}
 	return &order, nil
+}
+
+func (q *orderQuery) BulkWrite(writes []mongo.WriteModel) error {
+	if _, err := q.collection.BulkWrite(q.ctx, writes); err != nil {
+		logger.Error().Err(err).Caller().Str("func", "BulkWrite").Str("funcInline", "q.collection.BulkWrite").Msg("orderQuery")
+		return err
+	}
+	return nil
+}
+
+func (q *orderQuery) UpdateProviderOrderIdAndProviderResponseById(id primitive.ObjectID, providerOrderId int64, providerResponse string) error {
+	result, err := q.collection.UpdateByID(q.ctx, id, bson.M{
+		"$set": bson.M{"provider_order_id": providerOrderId, "provider_order_response": providerResponse, "updated_at": time.Now()},
+	})
+	if err != nil {
+		logger.Error().Err(err).Caller().Str("func", "UpdateProviderOrderIdAndProviderResponseById").Str("funcInline", "q.collection.UpdateByID").Msg("orderQuery")
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeProviderNotFound, Data: constants.ErrMsgResourceNotFound})
+	}
+	return nil
 }

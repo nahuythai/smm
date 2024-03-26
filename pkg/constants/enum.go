@@ -53,6 +53,7 @@ const (
 
 const (
 	TransactionTypePlayOrder = iota
+	TransactionTypeAddBalance
 )
 
 const (
@@ -86,12 +87,23 @@ const (
 )
 
 var OrderStatusTextMapping = map[int]string{
-	OrderStatusAwaiting:   "Awaiting",
-	OrderStatusPending:    "Pending",
-	OrderStatusProcessing: "Processing",
-	OrderStatusInProgress: "InProgress",
-	OrderStatusCompleted:  "Completed",
-	OrderStatusPartial:    "Partial",
-	OrderStatusCanceled:   "Canceled",
-	OrderStatusRefunded:   "Refunded",
+	OrderStatusAwaiting:   "AWAITING",
+	OrderStatusPending:    "PENDING",
+	OrderStatusProcessing: "PROCESSING",
+	OrderStatusInProgress: "INPROGRESS",
+	OrderStatusCompleted:  "COMPLETED",
+	OrderStatusPartial:    "PARTIAL",
+	OrderStatusCanceled:   "CANCELED",
+	OrderStatusRefunded:   "REFUNDED",
+}
+
+var OrderStatusMapping = map[string]int{
+	"AWAITING":   OrderStatusAwaiting,
+	"PENDING":    OrderStatusPending,
+	"PROCESSING": OrderStatusProcessing,
+	"INPROGRESS": OrderStatusInProgress,
+	"COMPLETED":  OrderStatusCompleted,
+	"PARTIAL":    OrderStatusPartial,
+	"CANCELED":   OrderStatusCanceled,
+	"REFUNDED":   OrderStatusRefunded,
 }

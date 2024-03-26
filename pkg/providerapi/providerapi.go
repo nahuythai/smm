@@ -4,7 +4,6 @@ import (
 	"smm/pkg/logging"
 
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var (
@@ -44,14 +43,12 @@ type MultipleOrderStatusRequest struct {
 }
 
 type MultipleOrderStatusOrderResponse struct {
-	Quantity     int64              `json:"quantity"`
-	Status       string             `json:"status"`
-	StartCounter int64              `json:"start_counter"`
-	Remains      int64              `json:"remains"`
-	Currency     string             `json:"currency"`
-	Charge       *string            `json:"charge"`
-	Order        primitive.ObjectID `json:"order"`
-	Error        string             `json:"error"`
+	Status       string  `json:"status"`
+	StartCounter int64   `json:"start_counter"`
+	Remains      int64   `json:"remains"`
+	Charge       *string `json:"charge"`
+	Order        int64   `json:"order"`
+	Error        string  `json:"error"`
 }
 
 func (p *provider) AddOrder(request AddOrderRequest) (*AddOrderResponse, error) {
@@ -61,7 +58,7 @@ func (p *provider) AddOrder(request AddOrderRequest) (*AddOrderResponse, error) 
 		"action":   "add",
 		"service":  request.ApiServiceId,
 		"link":     request.Link,
-		"quantity": "quantity",
+		"quantity": request.Quantity,
 	}).Struct(&res)
 	logger.Debug().Caller().Str("func", "AddOrder").Str("funcInline", "fiber.AcquireClient").Int("code", code).Bytes("body", body).Msg("provider-api")
 	if len(errs) > 0 {
