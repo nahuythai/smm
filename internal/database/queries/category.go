@@ -22,6 +22,7 @@ type Category interface {
 	UpdateById(id primitive.ObjectID, doc CategoryUpdateByIdDoc) error
 	GetById(id primitive.ObjectID, opts ...QueryOption) (category *models.Category, err error)
 	DeleteById(id primitive.ObjectID) error
+	GetByIds(ids []primitive.ObjectID, opts ...QueryOption) ([]models.Category, error)
 }
 type categoryQuery struct {
 	ctx        context.Context
@@ -124,4 +125,25 @@ func (q *categoryQuery) DeleteById(id primitive.ObjectID) error {
 		return response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeCategoryNotFound, Data: constants.ErrMsgResourceNotFound})
 	}
 	return nil
+}
+
+func (q *categoryQuery) GetByIds(ids []primitive.ObjectID, opts ...QueryOption) ([]models.Category, error) {
+	opt := NewOption()
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	findOpts := options.FindOptions{
+		Projection: opt.QueryOnlyField(),
+	}
+	cursor, err := q.collection.Find(q.ctx, bson.M{"_id": bson.M{"$in": ids}}, &findOpts)
+	if err != nil {
+		logger.Error().Err(err).Caller().Str("func", "GetByIds").Str("funcInline", "q.collection.Find").Msg("categoryQuery")
+		return nil, err
+	}
+	var categories []models.Category
+	if err = cursor.All(q.ctx, &categories); err != nil {
+		logger.Error().Err(err).Caller().Str("func", "GetByIds").Str("funcInline", "cursor.All").Msg("categoryQuery")
+		return nil, err
+	}
+	return categories, nil
 }

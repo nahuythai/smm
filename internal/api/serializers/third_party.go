@@ -30,9 +30,9 @@ func (v *ThirdPartyRouteValidate) Validate() error {
 }
 
 type ThirdPartyOrderCreateBodyValidate struct {
-	Quantity  int64  `json:"quantity" validate:"required"`
-	Link      string `json:"link" validate:"required"`
-	ServiceId string `json:"service_id" validate:"required"`
+	Quantity int64  `json:"quantity" validate:"required"`
+	Link     string `json:"link" validate:"required"`
+	Service  int    `json:"service" validate:"required"`
 }
 
 func (v *ThirdPartyOrderCreateBodyValidate) Validate() error {
@@ -198,4 +198,13 @@ type ThirdPartyBalanceResponse struct {
 	Status   string `json:"status"`
 	Balance  string `json:"balance"`
 	Currency string `json:"currency"`
+}
+
+type ThirdPartListServiceResponse struct {
+	Title     string `json:"title"`
+	Category  string `json:"category"`
+	MinAmount int64  `json:"min_amount"`
+	MaxAmount int64  `json:"max_amount"`
+	Rate      string `json:"rate"`
+	Seq       int    `json:"service"`
 }

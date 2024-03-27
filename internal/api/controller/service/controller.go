@@ -267,7 +267,6 @@ func (ctrl *controller) UserList(ctx *fiber.Ctx) error {
 	for i, service := range services {
 		res[i].Title = service.Title
 		res[i].Id = service.Id
-		res[i].Status = service.Status
 		res[i].Provider = providerIdNameMapping[service.ProviderId]
 		res[i].MaxAmount = service.MaxAmount
 		res[i].MinAmount = service.MinAmount

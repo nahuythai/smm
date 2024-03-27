@@ -7,17 +7,13 @@ import (
 	"smm/internal/database/models"
 	"smm/internal/database/queries"
 	"smm/pkg/constants"
-	"smm/pkg/logging"
 	providerapi "smm/pkg/providerapi"
 	"smm/pkg/response"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-)
-
-var (
-	logger = logging.GetLogger()
 )
 
 type Controller interface {
@@ -46,6 +42,8 @@ func (ctrl *controller) Route(ctx *fiber.Ctx) error {
 		return ctrl.MultipleOrderStatus(ctx)
 	case constants.ThirdPartyActionUserBalance:
 		return ctrl.Balance(ctx)
+	case constants.ThirdPartyActionServiceList:
+		return ctrl.ListService(ctx)
 	default:
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": "the selected action is invalid"})
 	}
@@ -72,11 +70,7 @@ func (ctrl *controller) CreateOrder(ctx *fiber.Ctx) error {
 
 	queryOption := queries.NewOption()
 	queryOption.SetOnlyField("provider_service_id", "provider_id", "category_id", "rate", "_id", "min_amount", "max_amount")
-	serviceId, err := primitive.ObjectIDFromHex(requestBody.ServiceId)
-	if err != nil {
-		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": "service not found"})
-	}
-	service, err := queries.NewService(ctx.Context()).GetActiveById(serviceId, queryOption)
+	service, err := queries.NewService(ctx.Context()).GetActiveBySeq(requestBody.Service, queryOption)
 	if err != nil {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -133,7 +127,7 @@ func (ctrl *controller) CreateOrder(ctx *fiber.Ctx) error {
 		Status:     constants.OrderStatusProcessing,
 		Link:       requestBody.Link,
 		UserId:     currentUser.Id,
-		ServiceId:  serviceId,
+		ServiceId:  service.Id,
 		Price:      price,
 		CategoryId: service.CategoryId,
 	}
@@ -233,4 +227,47 @@ func (ctrl *controller) MultipleOrderStatus(ctx *fiber.Ctx) error {
 		})
 	}
 	return ctx.JSON(result)
+}
+
+func (ctrl *controller) ListService(ctx *fiber.Ctx) error {
+	var requestBody serializers.ServiceUserListBodyValidate
+	if err := ctx.BodyParser(&requestBody); err != nil {
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+	}
+	if err := requestBody.Validate(); err != nil {
+		return err
+	}
+	serviceQuery := queries.NewService(ctx.Context())
+	queryOption := queries.NewOption()
+	queryOption.SetOnlyField("title", "seq", "_id", "category_id", "min_amount", "max_amount", "rate")
+	filter := requestBody.GetFilter()
+	filter["status"] = constants.ServiceStatusOn
+	queryOption.AddSort(requestBody.Sort())
+	services, err := serviceQuery.GetByFilter(bson.M{"status": constants.ServiceStatusOn}, queryOption)
+	if err != nil {
+		return err
+	}
+	categoryIds := make([]primitive.ObjectID, 0, len(services))
+	for _, service := range services {
+		categoryIds = append(categoryIds, service.CategoryId)
+	}
+	queryOption.SetOnlyField("title", "_id")
+	categoryIdNameMapping := make(map[primitive.ObjectID]string)
+	categories, err := queries.NewCategory(ctx.Context()).GetByIds(categoryIds)
+	if err != nil {
+		return err
+	}
+	for _, category := range categories {
+		categoryIdNameMapping[category.Id] = category.Title
+	}
+	res := make([]serializers.ThirdPartListServiceResponse, len(services))
+	for i, service := range services {
+		res[i].Title = service.Title
+		res[i].Seq = service.Seq
+		res[i].Category = categoryIdNameMapping[service.CategoryId]
+		res[i].MaxAmount = service.MaxAmount
+		res[i].MinAmount = service.MinAmount
+		res[i].Rate = fmt.Sprintf("%v", service.Rate)
+	}
+	return ctx.JSON(res)
 }

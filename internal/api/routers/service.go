@@ -41,5 +41,5 @@ func (r *service) Admin() {
 func (r *service) User() {
 	router := r.router.Group("/services")
 	router.Use(middleware.UserAuth)
-	router.Post("/list", r.ctrl.List)
+	router.Post("/list", r.ctrl.UserList)
 }

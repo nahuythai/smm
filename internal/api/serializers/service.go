@@ -150,7 +150,6 @@ func (v *ServiceUserListBodyValidate) GetFilter() bson.M {
 
 type ServiceUserListResponse struct {
 	Title       string             `json:"title"`
-	Status      int                `json:"status"`
 	Provider    string             `json:"provider"`
 	MinAmount   int64              `json:"min_amount"`
 	MaxAmount   int64              `json:"max_amount"`

@@ -24,6 +24,7 @@ type Service interface {
 	DeleteById(id primitive.ObjectID) error
 	GetActiveById(id primitive.ObjectID, opts ...QueryOption) (*models.Service, error)
 	GetByIds(ids []primitive.ObjectID, opts ...QueryOption) ([]models.Service, error)
+	GetActiveBySeq(seq int, opts ...QueryOption) (*models.Service, error)
 }
 type serviceQuery struct {
 	ctx        context.Context
@@ -166,4 +167,23 @@ func (q *serviceQuery) GetByIds(ids []primitive.ObjectID, opts ...QueryOption) (
 		return nil, err
 	}
 	return services, nil
+}
+
+func (q *serviceQuery) GetActiveBySeq(seq int, opts ...QueryOption) (*models.Service, error) {
+	var service models.Service
+	opt := NewOption()
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	findOpt := options.FindOneOptions{
+		Projection: opt.QueryOnlyField(),
+	}
+	if err := q.collection.FindOne(q.ctx, bson.M{"seq": seq, "status": constants.ServiceStatusOn}, &findOpt).Decode(&service); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, response.NewError(fiber.StatusNotFound, response.Option{Code: constants.ErrCodeServiceNotFound, Data: constants.ErrMsgResourceNotFound})
+		}
+		logger.Error().Err(err).Caller().Str("func", "GetActiveBySeq").Str("funcInline", "q.collection.FindOne").Msg("serviceQuery")
+		return nil, err
+	}
+	return &service, nil
 }
