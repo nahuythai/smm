@@ -34,6 +34,11 @@ func (ctrl *controller) Create(ctx *fiber.Ctx) error {
 	if err := requestBody.Validate(); err != nil {
 		return err
 	}
+
+	seq, err := queries.NewCounter(ctx.Context()).GenerateSeq(models.ServiceCollectionName)
+	if err != nil {
+		return response.NewError(fiber.StatusInternalServerError)
+	}
 	serviceQuery := queries.NewService(ctx.Context())
 	service, err := serviceQuery.CreateOne(models.Service{
 		Title:             requestBody.Title,
@@ -45,6 +50,7 @@ func (ctrl *controller) Create(ctx *fiber.Ctx) error {
 		ProviderServiceId: requestBody.ProviderServiceId,
 		CategoryId:        requestBody.CategoryId,
 		ProviderId:        requestBody.ProviderId,
+		Seq:               seq,
 	})
 	if err != nil {
 		return err

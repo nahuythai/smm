@@ -25,6 +25,7 @@ func NewPaymentMethod(router fiber.Router) PaymentMethod {
 
 func (r *paymentMethod) V1() {
 	r.Admin()
+	r.User()
 }
 
 func (r *paymentMethod) Admin() {
@@ -35,4 +36,10 @@ func (r *paymentMethod) Admin() {
 	router.Put("/", r.ctrl.Update)
 	router.Get("/:id", r.ctrl.Get)
 	router.Delete("/:id", r.ctrl.Delete)
+}
+
+func (r *paymentMethod) User() {
+	router := r.router.Group("/payment-methods")
+	router.Use(middleware.UserAuth)
+	router.Post("/list", r.ctrl.UserList)
 }

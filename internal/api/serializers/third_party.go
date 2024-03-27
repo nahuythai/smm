@@ -193,3 +193,9 @@ type ThirdPartyMultipleOrderStatusResponse struct {
 	Charge       *string            `json:"charge"`
 	Order        primitive.ObjectID `json:"order"`
 }
+
+type ThirdPartyBalanceResponse struct {
+	Status   string `json:"status"`
+	Balance  string `json:"balance"`
+	Currency string `json:"currency"`
+}

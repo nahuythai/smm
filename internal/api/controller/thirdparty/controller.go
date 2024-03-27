@@ -44,9 +44,20 @@ func (ctrl *controller) Route(ctx *fiber.Ctx) error {
 		return ctrl.OrderStatus(ctx)
 	case constants.ThirdPartyActionOrderMultipleStatus:
 		return ctrl.MultipleOrderStatus(ctx)
+	case constants.ThirdPartyActionUserBalance:
+		return ctrl.Balance(ctx)
 	default:
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": "the selected action is invalid"})
 	}
+}
+
+func (ctrl *controller) Balance(ctx *fiber.Ctx) error {
+	user := ctx.Locals(constants.LocalUserKey).(*models.User)
+	return ctx.JSON(serializers.ThirdPartyBalanceResponse{
+		Status:   "success",
+		Balance:  fmt.Sprintf("%v", user.Balance),
+		Currency: "VND",
+	})
 }
 
 func (ctrl *controller) CreateOrder(ctx *fiber.Ctx) error {

@@ -18,6 +18,7 @@ type Service struct {
 	ProviderServiceId string             `bson:"provider_service_id"`
 	CategoryId        primitive.ObjectID `bson:"category_id"`
 	ProviderId        primitive.ObjectID `bson:"provider_id"`
+	Seq               int                `bson:"seq"`
 	Id                primitive.ObjectID `bson:"_id,omitempty"`
 }
 

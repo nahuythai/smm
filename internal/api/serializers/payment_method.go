@@ -115,3 +115,59 @@ type PaymentMethodGetResponse struct {
 	AccountNumber    string             `json:"account_number"`
 	Id               primitive.ObjectID `json:"id"`
 }
+
+type PaymentMethodUserListBodyValidate struct {
+	Page     int64                         `json:"page" validate:"omitempty"`
+	Limit    int64                         `json:"limit" validate:"omitempty"`
+	SortType int                           `json:"sort_type" validate:"omitempty,oneof=-1 1 0"`
+	SortBy   string                        `json:"sort_by" validate:"omitempty"`
+	Search   string                        `json:"search" validate:"omitempty"`
+	Filters  []PaymentMethodUserListFilter `json:"filters" validate:"omitempty,dive"`
+}
+
+func (v *PaymentMethodUserListBodyValidate) Validate() error {
+	return validator.Validate(v)
+}
+
+func (v *PaymentMethodUserListBodyValidate) Sort() map[string]int {
+	sortBy := "created_at"
+	if v.SortBy != "" {
+		sortBy = v.SortBy
+	}
+	return map[string]int{sortBy: v.SortType}
+}
+
+type PaymentMethodUserListFilter struct {
+	Value  interface{} `json:"value" validate:"required"`
+	Method string      `json:"method" validate:"required,oneof=$eq $regex"`
+	Field  string      `json:"field" validate:"required,oneof=name code"`
+}
+
+func (v *PaymentMethodUserListBodyValidate) GetFilter() bson.M {
+	filters := make([]queries.Filter, 0, len(v.Filters))
+	for _, filter := range v.Filters {
+		filters = append(filters, queries.Filter(filter))
+	}
+	filterOption := queries.NewFilterOption()
+	filterOption.AddFilter(filters...)
+	query := filterOption.BuildAndQuery()
+	if v.Search != "" {
+		query["$or"] = []bson.M{{"title": bson.M{queries.QueryFilterMethodRegex: primitive.Regex{Pattern: regexp.QuoteMeta(fmt.Sprintf("%v", v.Search)), Options: "i"}}}}
+	}
+	return query
+}
+
+type PaymentMethodUserListResponse struct {
+	Name             string             `json:"name"`
+	Code             string             `json:"code"`
+	Image            string             `json:"image"`
+	MinAmount        float64            `json:"min_amount"`
+	MaxAmount        float64            `json:"max_amount"`
+	ConventionRate   float64            `json:"convention_rate"`
+	Description      string             `json:"description"`
+	PercentageCharge float64            `json:"percentage_charge"`
+	FixedCharge      float64            `json:"fixed_charge"`
+	AccountName      string             `json:"account_name"`
+	AccountNumber    string             `json:"account_number"`
+	Id               primitive.ObjectID `json:"id"`
+}

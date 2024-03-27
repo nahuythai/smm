@@ -3,7 +3,6 @@ package models
 import (
 	"crypto/rand"
 	"math/big"
-	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -23,7 +22,7 @@ const TransactionCollectionName = "transactions"
 
 func (t *Transaction) GenerateTransactionId() string {
 	length := 10
-	charSet := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	charSet := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	randomString := make([]byte, length)
 	maxIndex := big.NewInt(int64(len(charSet)))
 
@@ -35,5 +34,5 @@ func (t *Transaction) GenerateTransactionId() string {
 		randomString[i] = charSet[randomIndex.Int64()]
 	}
 
-	return strings.ToUpper(string(randomString))
+	return string(randomString)
 }

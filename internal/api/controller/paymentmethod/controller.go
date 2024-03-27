@@ -18,6 +18,7 @@ type Controller interface {
 	Update(ctx *fiber.Ctx) error
 	Get(ctx *fiber.Ctx) error
 	Delete(ctx *fiber.Ctx) error
+	UserList(ctx *fiber.Ctx) error
 }
 type controller struct{}
 
@@ -169,4 +170,59 @@ func (ctrl *controller) Delete(ctx *fiber.Ctx) error {
 		return err
 	}
 	return response.New(ctx, response.Option{StatusCode: fiber.StatusOK})
+}
+
+func (ctrl *controller) UserList(ctx *fiber.Ctx) error {
+	var requestBody serializers.PaymentMethodListBodyValidate
+	if err := ctx.BodyParser(&requestBody); err != nil {
+		return response.NewError(fiber.StatusBadRequest, response.Option{Data: constants.ErrMsgFieldWrongType, Code: constants.ErrCodeAppBadRequest})
+	}
+	if err := requestBody.Validate(); err != nil {
+		return err
+	}
+	paymentMethodQuery := queries.NewPaymentMethod(ctx.Context())
+	queryOption := queries.NewOption()
+	pagination := request.NewPagination(requestBody.Page, requestBody.Limit)
+	queryOption.SetPagination(pagination)
+	queryOption.SetOnlyField("name", "code", "image", "_id", "min_amount", "max_amount", "description",
+		"percentage_charge", "fixed_charge", "convention_rate", "account_name", "account_number")
+	totalChan := make(chan int64, 1)
+	errChan := make(chan error, 1)
+
+	filter := requestBody.GetFilter()
+	filter["status"] = constants.PaymentMethodStatusOn
+	go func() {
+		total, err := paymentMethodQuery.GetTotalByFilter(filter)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		totalChan <- total
+		errChan <- nil
+	}()
+	queryOption.AddSort(requestBody.Sort())
+	paymentMethods, err := paymentMethodQuery.GetByFilter(filter, queryOption)
+	if err != nil {
+		return err
+	}
+	if err = <-errChan; err != nil {
+		return err
+	}
+	res := make([]serializers.PaymentMethodUserListResponse, len(paymentMethods))
+	for i, paymentMethod := range paymentMethods {
+		res[i].Name = paymentMethod.Name
+		res[i].Code = paymentMethod.Code
+		res[i].Image = paymentMethod.Image
+		res[i].MinAmount = paymentMethod.MinAmount
+		res[i].MaxAmount = paymentMethod.MaxAmount
+		res[i].ConventionRate = paymentMethod.ConventionRate
+		res[i].Description = paymentMethod.Description
+		res[i].PercentageCharge = paymentMethod.PercentageCharge
+		res[i].FixedCharge = paymentMethod.FixedCharge
+		res[i].AccountName = paymentMethod.AccountName
+		res[i].AccountNumber = paymentMethod.AccountNumber
+		res[i].Id = paymentMethod.Id
+	}
+	pagination.SetTotal(<-totalChan)
+	return response.NewPaginationResponse(ctx, response.PaginationResponse{StatusCode: fiber.StatusOK, Data: res, Extras: *pagination})
 }
